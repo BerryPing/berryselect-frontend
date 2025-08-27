@@ -15,12 +15,12 @@ export default defineConfig({
     port: 5173, // 기본값, 필요시 변경
     open: true, // dev 서버 기동 시 브라우저 자동 오픈 (선택)
     proxy: {
-      // 프론트에서 /api 로 호출하면 백엔드(스프링 8080)로 프록시
+      // 프론트에서 /src.api 로 호출하면 백엔드(스프링 8080)로 프록시
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         // 필요 시 프리픽스 제거:
-        // rewrite: (path) => path.replace(/^\/api/, ''),
+        // rewrite: (path) => path.replace(/^\/src.api/, ''),
       },
     },
   },
