@@ -11,6 +11,18 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --theme-primary: #5F0080;
+  --theme-secondary: #E5D5F0;
+  --theme-bg: #FAF7FB;
+  --theme-text: #3C1053;
+  --theme-text-light: #9B4DCC;
+  --theme-text-sub: #7B6EF6;
+  --theme-text-bold-green: #166534;
+  --theme-text-green: #0F766E;
+  --theme-text-light-green: #DCFCE7;
+  --theme-text-bold-yellow: #92400E;
+  --theme-text-light-yellow: #FEF3CD;
 }
 
 a {
