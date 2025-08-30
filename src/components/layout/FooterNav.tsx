@@ -15,14 +15,13 @@ interface FooterNavProps {
 }
 
 const StyledFooter = styled.footer`
-  position: fixed;
+  position: absolute;
+  left: 0;
+  right: 0;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 24rem; /* DefaultLayout과 동일한 max-width */
+  width: 100%;  
   height: 69px;
-  background-color: var(--theme-bg, #ffffff);
+  background-color: #ffffff;
   border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-around;
@@ -45,7 +44,7 @@ const FooterItem = styled.div<{ $isActive: boolean }>`
   font-size: 12px;
   color: ${props => props.$isActive
     ? 'var(--theme-primary, #fddf99)'
-    : 'var(--theme-text-light, #8d8d8d)'};
+    : 'var(--theme-light-gray, #8d8d8d)'};
   font-weight: ${props => props.$isActive ? '700' : '400'};
   white-space: nowrap;
   cursor: pointer;
@@ -66,7 +65,7 @@ const FooterItem = styled.div<{ $isActive: boolean }>`
     height: 24px;
     color: ${props => props.$isActive
     ? 'var(--theme-primary, #fddf99)'
-    : 'var(--theme-text-light, #8d8d8d)'};
+    : 'var(--theme-light-gray, #8d8d8d)'};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -162,36 +161,3 @@ const FooterNav: React.FC<FooterNavProps> = ({ className }) => {
 };
 
 export default FooterNav;
-
-// ===== 사용 예시 =====
-/*
-// 기본 사용 (App.tsx 또는 Layout 컴포넌트에서)
-import FooterNav from './components/FooterNav';
-
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/berrypick" element={<BerrypickPage />} />
-        <Route path="/wallet" element={<WalletPage />} />
-        <Route path="/myberry" element={<MyberryPage />} />
-      </Routes>
-      <FooterNav />
-    </BrowserRouter>
-  );
-}
-
-// 또는 DefaultLayout과 함께 사용
-function DefaultLayout() {
-  return (
-    <div className="layout-container">
-      <Header />
-      <main>
-        <Outlet />
-      </main>
-      <FooterNav />
-    </div>
-  );
-}
-*/

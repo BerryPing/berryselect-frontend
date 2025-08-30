@@ -37,7 +37,7 @@ const StyledHeader = styled.header`
 
   height: 56px;
   padding: 0 16px;
-  background-color: var(--theme-bg, #f9fafb);
+  background-color: var(--theme-primary, #5F0080FF);
   border-bottom: none;
   box-sizing: border-box;
 `;
@@ -63,7 +63,7 @@ const CenterSection = styled.div`
   h1 {
     font-size: 1.125rem;
     font-weight: 800;
-    color: var(--theme-text, #1f2937);
+    color: #ffffff;
     white-space: nowrap;
     margin: 0;
   }
@@ -155,38 +155,3 @@ const Header: React.FC<HeaderProps> = ({
 
 export default Header;
 
-// ===== 사용 예시 =====
-/*
-// 기본 사용
-<Header title="마이페이지" />
-
-// 커스텀 back 액션
-<Header
-  title="설정"
-  backAction={() => console.log('커스텀 뒤로가기')}
-/>
-
-// 홈 버튼 포함
-<Header
-  title="상세 페이지"
-  showHomeButton={true}
-/>
-
-// 뒤로가기 버튼 숨기기
-<Header
-  title="메인"
-  showBackButton={false}
-/>
-
-// onBack 이벤트 핸들링
-<Header
-  title="프로필 편집"
-  onBack={() => {
-    if (hasUnsavedChanges) {
-      showConfirmDialog();
-    } else {
-      navigate(-1);
-    }
-  }}
-/>
-*/

@@ -3,6 +3,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
+import FooterNav from "@/components/layout/FooterNav.tsx";
 
 const ViewWrapper = styled.div`
   display: flex;
@@ -27,18 +28,28 @@ const SmartphoneView = styled.div`
   max-height: 90vh;
 `;
 
+// 콘텐츠가 헤더/푸터에 가리지 않도록 안전 여백
+const Main = styled.main`
+  flex:1 1 auto;
+  padding-top:56px;   /* Header 높이 */
+  padding-bottom:69px;/* Footer 높이 */
+  overflow-y: auto;  /* 스크롤 처리 */ 
+`;
+
 const DefaultLayout: React.FC = () => {
-  return (
-    <ViewWrapper>
-      <SmartphoneView>
-        <Outlet />
-      </SmartphoneView>
-    </ViewWrapper>
-  );
+    return (
+        <ViewWrapper>
+            <SmartphoneView>
+                <Main>
+                    <Outlet />
+                </Main>
+
+                {/* 고정 하단 네비게이션 */}
+                <FooterNav />
+            </SmartphoneView>
+        </ViewWrapper>
+    );
 };
 
 export default DefaultLayout;
 
-
-/* main.tsx 또는 index.tsx에서 import */
-/* import './global.css'; */
