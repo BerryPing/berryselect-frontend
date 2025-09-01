@@ -1,6 +1,8 @@
 import Header4Auth from '@/components/layout/Header4Auth';
 import AuthTabs from './AuthTabs';
 import styles from './Auth.module.css';
+import Divider from '@/components/common/Divider';
+import kakaoLogo from '@/assets/imgs/kakao-logo.png';
 import { useState } from 'react';
 
 export default function LoginPage() {
@@ -52,6 +54,13 @@ export default function LoginPage() {
                         로그인
                     </button>
                 </form>
+                <Divider />
+
+                {/* 카카오 버튼 */}
+                <button className={styles.kakaoButton}>
+                    <img src={kakaoLogo} alt="카카오 로고" className={styles.kakaoImg} />
+                    <span className={styles.kakaoText}>카카오로 시작하기</span>
+                </button>
             </div>
         </div>
     );
