@@ -47,7 +47,8 @@ const DefaultLayout: React.FC = () => {
                 </Main>
 
                 {/* 고정 하단 네비게이션 */}
-                <FooterNav />
+                {/* auth 페이지에는 FooterNav 숨기기 */}
+                {!isAuthPage && <FooterNav />}
             </SmartphoneView>
         </ViewWrapper>
     );
