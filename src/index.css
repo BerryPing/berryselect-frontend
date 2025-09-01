@@ -24,6 +24,12 @@
   --theme-text-bold-yellow: #92400E;
   --theme-text-light-yellow: #FEF3CD;
   --theme-light-gray: #8D8D8D;
+
+  --slogan-gray : #E2E8F0;
+  --color-white : #FFFFFF;
+  --color-kakao : #FEE500;
+  --color-kakao-text : #3C1E1E;
+  --color-input-text : #111827;
 }
 
 html, body, #root { height: 100%; }

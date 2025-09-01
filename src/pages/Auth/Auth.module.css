@@ -3,10 +3,10 @@
 .tabs {
     display: flex;
     align-self: stretch;
-    background: white;
+    background: var(--color-white);
     box-shadow: 0px 4px 12px -4px rgba(0, 0, 0, 0.1);
     border-radius: 12px;
-    border: 1px solid #e5d5f0;
+    border: 1px solid var(--theme-secondary);
     overflow: hidden;
 
     padding : 5px;
@@ -31,14 +31,14 @@
 
 /* 선택된 탭 */
 .tabActive {
-    background: #5f0080; /* 진보라 */
-    color: white;
+    background: var(--theme-primary);
+    color: var(--color-white);
 }
 
 /* 선택 안된 탭 */
 .tabInactive {
     background: transparent;
-    color: #9b4dcc; /* 연보라 */
+    color: var(--theme-text-light);
 }
 
 /* 바깥 컨테이너 */
@@ -51,9 +51,9 @@
 
 /* 카드 전체 */
 .card {
-    background: #fff;
+    background: var(--color-white);
     border-radius: 16px;
-    outline: 1px solid #E5D5F0;
+    outline: 1px solid var(--theme-secondary);
     outline-offset: -1px;
     box-shadow: 0 8px 20px -12px rgba(0, 0, 0, .15);
     padding: 25px;
@@ -71,7 +71,7 @@
 
 /* 라벨 */
 .label {
-    color: #5F0080;
+    color: var(--theme-primary);
     font: 600 13.6px/1.2 Roboto, sans-serif;
 }
 
@@ -81,18 +81,18 @@
     padding: 12px 17px;
     border-radius: 12px;
     border: none;
-    outline: 1px solid #E5D5F0;
+    outline: 1px solid var(--theme-secondary);
     outline-offset: -1px;
     font: 400 15.2px/1.2 Inter, sans-serif;
-    color: #111827;
+    color: var(--color-input-text);
 }
 
 .input::placeholder {
-    color: #9B4DCC;
+    color: var(--theme-text-light);
 }
 
 .input:focus {
-    outline-color: #9B4DCC;
+    outline-color: var(--theme-text-light);
     box-shadow: 0 0 0 3px rgba(155, 77, 204, 0.15);
 }
 
@@ -100,8 +100,8 @@
 .submit {
     height: 48px;
     border-radius: 12px;
-    background: #5F0080;
-    color: #fff;
+    background: var(--theme-primary);
+    color: var(--color-white);
     font: 700 15.2px/1.2 Inter, sans-serif;
     border: none;
     cursor: pointer;
@@ -115,7 +115,7 @@
 .kakaoButton {
     width: 100%;
     height: 48px;
-    background-color: #fee500;
+    background-color: var(--color-kakao);
     border-radius: 12px;
     border: none;
     display: flex;
@@ -123,7 +123,6 @@
     justify-content: center;
     gap: 8px;
     cursor: pointer;
-    /*margin-top: 16px;*/
 }
 
 .kakaoButton:hover {
@@ -140,5 +139,5 @@
     font-size: 15.2px;
     font-weight: 700;
     font-family: Inter, sans-serif;
-    color: #3c1e1e;
+    color: var(--color-kakao-text);
 }

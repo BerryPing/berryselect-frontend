@@ -16,12 +16,12 @@ const DividerWrapper = styled.div`
 const Line = styled.span`
   flex: 1;
   height: 1px;
-  background: #E5D5F0; /* var(--color-violet-89) */
+  background: var(--theme-secondary);
 `;
 
 const Text = styled.span`
   padding: 0 16px;
-  color: #9B4DCC; /* var(--color-violet-55) */
+  color: var(--theme-text-light);
   font-size: 12.8px;
   font-family: Roboto, sans-serif;
   font-weight: 400;
