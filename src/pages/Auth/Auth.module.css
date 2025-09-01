@@ -1,0 +1,42 @@
+/* --- Auth Tabs --- */
+/* 탭 전체 wrapper */
+.tabs {
+    display: flex;
+    align-self: stretch;
+    background: white;
+    box-shadow: 0px 4px 12px -4px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    border: 1px solid #e5d5f0;
+    overflow: hidden;
+
+    padding : 5px;
+    margin-top : 1.5rem;
+    margin-bottom: 1.5rem;
+    margin-left : 0.8rem;
+    margin-right : 0.8rem;
+}
+
+/* 기본 탭 스타일 */
+.tab {
+    flex: 1 1 0;
+    text-align: center;
+    padding: 14px 12px;
+    font-size: 15.2px;
+    font-weight: 700;
+    font-family: "Roboto", sans-serif;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* 선택된 탭 */
+.tabActive {
+    background: #5f0080; /* 진보라 */
+    color: white;
+}
+
+/* 선택 안된 탭 */
+.tabInactive {
+    background: transparent;
+    color: #9b4dcc; /* 연보라 */
+}
