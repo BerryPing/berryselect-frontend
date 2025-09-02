@@ -42,7 +42,10 @@ const DefaultLayout: React.FC = () => {
     return (
         <ViewWrapper>
             <SmartphoneView>
-                <Main style={{paddingTop : isAuthPage ? 0 : "56px"}}>
+                <Main style={{
+                    paddingTop: isAuthPage ? 0 : "56px",
+                    paddingBottom: isAuthPage ? 0 : "69px",
+                }}>
                     <Outlet />
                 </Main>
 

@@ -10,6 +10,7 @@ import WalletPage from '@/pages/Wallet/WalletPage';
 import MyBerryPage from '@/pages/MyBerry/MyBerryPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import LoginPage from '@/pages/Auth/LoginPage';
+import WelcomePage from '@/pages/Auth/WelcomePage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
 
 export const router = createBrowserRouter([
@@ -21,8 +22,9 @@ export const router = createBrowserRouter([
             { path: 'berrypick', element: <BerryPickPage /> }, // '/berrypick'
             { path: 'wallet', element: <WalletPage /> },       // '/wallet'
             { path: 'myberry', element: <MyBerryPage /> },     // '/myberry'
-            { path: "auth/login", element: <LoginPage /> },
-            { path: "auth/register", element: <RegisterPage /> },
+            { path: 'auth/welcome', element: <WelcomePage/>},
+            { path: 'auth/login', element: <LoginPage /> },
+            { path: 'auth/register', element: <RegisterPage /> },
             { path: '*', element: <NotFoundPage /> },
         ],
     },
