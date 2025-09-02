@@ -1,7 +1,7 @@
 /* ===== DefaultLayout.tsx ===== */
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import FooterNav from "@/components/layout/FooterNav.tsx";
 
@@ -37,15 +37,21 @@ const Main = styled.main`
 `;
 
 const DefaultLayout: React.FC = () => {
+    const location = useLocation();
+    const isAuthPage = location.pathname.startsWith("/auth");
     return (
         <ViewWrapper>
             <SmartphoneView>
-                <Main>
+                <Main style={{
+                    paddingTop: isAuthPage ? 0 : "56px",
+                    paddingBottom: isAuthPage ? 0 : "69px",
+                }}>
                     <Outlet />
                 </Main>
 
                 {/* 고정 하단 네비게이션 */}
-                <FooterNav />
+                {/* auth 페이지에는 FooterNav 숨기기 */}
+                {!isAuthPage && <FooterNav />}
             </SmartphoneView>
         </ViewWrapper>
     );

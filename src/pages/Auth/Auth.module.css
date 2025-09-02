@@ -1,0 +1,144 @@
+/* --- Auth Tabs --- */
+/* 탭 전체 wrapper */
+.tabs {
+    display: flex;
+    align-self: stretch;
+    background: var(--color-white);
+    box-shadow: 0px 4px 12px -4px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    border: 1px solid var(--theme-secondary);
+    overflow: hidden;
+
+    padding : 5px;
+    margin-top : 1.5rem;
+    margin-bottom: 0.5rem;
+    margin-left : 0rem;
+    margin-right : 0rem;
+}
+
+/* 기본 탭 스타일 */
+.tab {
+    flex: 1 1 0;
+    text-align: center;
+    padding: 14px 12px;
+    font-size: 15.2px;
+    font-weight: 700;
+    font-family: "Roboto", sans-serif;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* 선택된 탭 */
+.tabActive {
+    background: var(--theme-primary);
+    color: var(--color-white);
+}
+
+/* 선택 안된 탭 */
+.tabInactive {
+    background: transparent;
+    color: var(--theme-text-light);
+}
+
+/* 바깥 컨테이너 */
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 16px 24px;
+}
+
+/* 카드 전체 */
+.card {
+    background: var(--color-white);
+    border-radius: 16px;
+    outline: 1px solid var(--theme-secondary);
+    outline-offset: -1px;
+    box-shadow: 0 8px 20px -12px rgba(0, 0, 0, .15);
+    padding: 25px;
+    margin-bottom : 0rem;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 각 필드 */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* 라벨 */
+.label {
+    color: var(--theme-primary);
+    font: 600 13.6px/1.2 Roboto, sans-serif;
+}
+
+/* 인풋 */
+.input {
+    height: 20px;
+    padding: 12px 17px;
+    border-radius: 12px;
+    border: none;
+    outline: 1px solid var(--theme-secondary);
+    outline-offset: -1px;
+    font: 400 15.2px/1.2 Inter, sans-serif;
+    color: var(--color-input-text);
+}
+
+.input::placeholder {
+    color: var(--theme-text-light);
+}
+
+.input:focus {
+    outline-color: var(--theme-text-light);
+    box-shadow: 0 0 0 3px rgba(155, 77, 204, 0.15);
+}
+
+/* 로그인 버튼 */
+.submit {
+    height: 48px;
+    border-radius: 12px;
+    background: var(--theme-primary);
+    color: var(--color-white);
+    font: 700 15.2px/1.2 Inter, sans-serif;
+    border: none;
+    cursor: pointer;
+    transition: filter .2s ease, transform .1s ease;
+}
+
+.submit:hover { filter: brightness(1.03); }
+.submit:active { transform: translateY(1px); }
+
+/* 카카오 로그인 버튼 */
+.kakaoButton {
+    width: 100%;
+    height: 48px;
+    background-color: var(--color-kakao);
+    border-radius: 12px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.kakaoButton:hover {
+    opacity: 0.9;
+}
+
+.kakaoImg {
+    width: 30px;
+    height: 30px;
+    /*border-radius: 50%;*/
+}
+
+.kakaoText {
+    font-size: 15.2px;
+    font-weight: 700;
+    font-family: Inter, sans-serif;
+    color: var(--color-kakao-text);
+}
