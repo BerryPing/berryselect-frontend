@@ -1,6 +1,6 @@
 // src/pages/BerryPick/BerryPickPage.tsx
 import Header from '@/components/layout/Header.tsx';
-import InputPanel from '@/components/berrypay/InputPanel.tsx';
+import { InputPanel } from '@/components/berrypay/InputPanel.tsx';
 
 const BerryPickPage = () => {
   return (
