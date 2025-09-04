@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import berrylogo from "@/assets/imgs/berrylogo.png";
 import Header4Auth from "@/components/layout/Header4Auth.tsx";
@@ -7,19 +8,42 @@ import Header4Auth from "@/components/layout/Header4Auth.tsx";
 
 export default function LoginPage() {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
+    //이미 토큰 있으면 홈으로
+    useEffect (() => {
+        const access = localStorage.getItem("accessToken");
+        if(access) navigate("/",{replace : true});
+    }, [navigate]);
+
+    const startKakaoAuth = () => {
+        if(loading) return;
+        setLoading(true);
+        const base = import.meta.env.VITE_API_BASE_URL;
+        if(!base){
+            console.error("VITE_API_BASE_URL 미설정");
+            setLoading(false);
+            return;
+        }
+        // 카카오 인가 URL로 이동 (백엔드가 신규/기존 유저 모두 처리)
+        window.location.href = `${base}/auth/kakao/authorize`;
+    };
+
     return (
         <div>
             <Header4Auth />
 
             <Wrapper>
             <Logo src={berrylogo} alt="berry logo" />
-            <StartButton onClick={() => navigate("/auth/login")}>
+
+            {/* 회원가입(카카오로 시작하기) */}
+            <StartButton onClick={startKakaoAuth} disabled={loading}>
                 베리셀렉트 시작하기
             </StartButton>
 
             <Inline>
                 <InlineText>이미 계정이 있으신가요?</InlineText>
-                <LinkButton onClick={() => navigate("/auth/login")}> 로그인 </LinkButton>
+                <LinkButton onClick={startKakaoAuth} disabled={loading}> 로그인 </LinkButton>
             </Inline>
 
         </Wrapper>
@@ -55,7 +79,6 @@ const StartButton = styled.button`
 `;
 
 const Inline = styled.div`
-margin-top : 18px;
     display : flex;
     align-items : center;
     gap : 6px;

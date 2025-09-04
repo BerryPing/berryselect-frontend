@@ -11,6 +11,7 @@ import MyBerryPage from '@/pages/MyBerry/MyBerryPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import LoginPage from '@/pages/Auth/LoginPage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
+import AuthCallback from '@/pages/Auth/AuthCallback';
 
 export const router = createBrowserRouter([
     {
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
             { path: 'myberry', element: <MyBerryPage /> },     // '/myberry'
             { path: 'auth/login', element: <LoginPage /> },
             { path: 'auth/register', element: <RegisterPage /> },
+            { path: 'auth/callback', element:<AuthCallback />},
             { path: '*', element: <NotFoundPage /> },
         ],
     },
