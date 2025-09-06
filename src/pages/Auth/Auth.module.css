@@ -1,0 +1,259 @@
+/* Auth.module.css */
+
+/* 섹션 */
+.categorySection {
+    margin-bottom: 20px;
+}
+
+/* 제목 */
+.categoryTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--theme-primary);
+    margin : 25px;
+    margin-bottom : 13px;
+}
+
+/* 버튼 래퍼 */
+.categoryWrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 24px;
+}
+
+/* 버튼 공통 */
+.categoryButton {
+    display: inline-flex;
+    align-items: center;
+    min-height: 37px;              /* 캡처 높이 맞춤 */
+    padding: 10px 14px;            /* 비선택 패딩 */
+    border-radius: 20px;
+    font-size: 13.6px;
+    font-weight: 400;
+    background: #fff;
+    color: var(--theme-text); /* 텍스트는 보라빛 다크 */
+    border: 1px solid var(--theme-secondary); /* 연보라 */
+    transition: border-color .15s ease, box-shadow .15s ease, transform .05s ease;
+    outline: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent; /* 모바일 탭 하이라이트 제거 */
+}
+.categoryButton:focus { outline: none; }
+.categoryButton:active { box-shadow: none; }
+
+.categoryButton:hover {
+    border-color: var(--theme-primary);
+}
+
+/* 버튼 선택 상태 */
+.categoryButtonSelected {
+    background: var(--color-white);
+    border-color: var(--theme-primary);
+    color: var(--theme-primary);
+    border-width : 2px;
+    padding : 9px 13px;
+}
+
+/* ====== Notice / Toggle Section ====== */
+
+.noticeSection {
+    margin-top: 8px;
+    padding-bottom: 8px;
+    background: transparent;
+}
+
+.noticeTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--theme-primary);
+    margin: 16px 24px 8px;
+}
+
+/* 한 줄(라벨 + 스위치) */
+.toggleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+}
+
+/* 라벨 텍스트 묶음 */
+.toggleText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.toggleLabel {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--theme-primary);
+}
+
+.toggleCaption {
+    font-size: 12px;
+    color: var(--theme-text-light);
+}
+
+/* 구분선 */
+.toggleDivider {
+    height: 1px;
+    margin: 0 24px;
+    background: #eadcf3; /* 연보라 라인 */
+}
+
+/* ====== Switch(checkbox 커스텀) ====== */
+
+.switch {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 44px;
+    height: 24px;
+    border-radius: 9999px;
+    background: #ece8f1;                  /* OFF 트랙 */
+    border: 1px solid #e0d3eb;
+    position: relative;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* thumb */
+.switch::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+    transition: transform .2s ease;
+}
+
+/* ON 상태 */
+.switch:checked {
+    background: var(--theme-primary);                 /* 보라 트랙 */
+    border-color: var(--theme-primary);
+}
+
+.switch:checked::after {
+    transform: translate(20px, -50%);    /* 오른쪽으로 이동 */
+}
+
+/* 키보드 포커스 */
+.switch:focus-visible {
+    box-shadow: 0 0 0 3px rgba(95,0,128,.18);
+}
+
+/* 파이어폭스 기본 포커스 제거 */
+.switch::-moz-focus-inner { border: 0; }
+.switch:-moz-focusring { outline: none; }
+
+
+/* ====== Consent (동의 체크) ====== */
+
+.consentSection {
+    padding: 8px 24px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* 한 줄: 체크박스 + 텍스트 */
+.consentRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+/* 텍스트 묶음 */
+.consentText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* 첫 줄(라벨) */
+.consentLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--theme-primary);
+}
+
+/* 둘째 줄(설명) */
+.consentCaption {
+    font-size: 12px;
+    color: var(--theme-text-light);
+}
+
+/* 커스텀 체크박스 */
+.check {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid #caaee0;          /* 연보라 보더 */
+    background: #fff;
+    margin-top: 2px;                       /* 텍스트와 수직 정렬 */
+    cursor: pointer;
+    outline: none;
+    transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+}
+
+/* 체크 상태 */
+.check:checked {
+    background: var(--theme-primary);                   /* 진보라 배경 */
+    border-color: var(--theme-primary);
+}
+
+/* 체크 표시(하얀 V) */
+.check:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 6px;
+    height: 10px;
+    border: 2px solid #fff;
+    border-top: 0;
+    border-left: 0;
+    transform: rotate(45deg);
+}
+
+/* 호버/포커스 */
+.check:hover { border-color: #a57bcc; }
+.check:focus-visible { box-shadow: 0 0 0 3px rgba(95,0,128,.18); }
+
+/* 고대비 모드 대응 */
+@media (forced-colors: active) {
+    .check { forced-color-adjust: none; }
+}
+
+.primaryAction {
+    display: block;
+    margin: 8px auto;        /* 중앙 정렬 */
+    width: 80%;               /* 부모 대비 80% 너비 */
+    max-width: 320px;         /* 최대 320px까지만 늘어남 */
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    color: var(--color-white);
+    background: var(--theme-primary);
+    cursor: pointer;
+    transition: opacity .15s ease, transform .02s ease;
+}
+.primaryAction:active { transform: translateY(1px); }
+.primaryActionDisabled {
+    background: #d9cbe5;
+    color: #6b6b6b;
+    cursor: not-allowed;
+}
