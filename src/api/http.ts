@@ -1,9 +1,16 @@
 import axios from "axios";
 import type { AxiosResponse, AxiosError } from "axios";
 
-/** 공용 axios 인스턴스 */
+/** baseURL: .env → 없으면 빈값(상대경로) */
+interface ViteEnv {
+    VITE_API_BASE_URL?: string;
+}
+
+const envBase = (import.meta as ImportMeta & { env: ViteEnv }).env.VITE_API_BASE_URL;
+const baseURL = envBase ? envBase.replace(/\/+$/, "") : ""; // 끝 슬래시 제거
+
 const http = axios.create({
-    baseURL: "/api",
+    baseURL,              // 예) http://localhost:8080  또는 ""(상대경로)
     withCredentials: false,
     timeout: 10000,
 });

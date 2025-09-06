@@ -1,6 +1,8 @@
 import http from "./http";
 
 /** ───────── Types ───────── */
+export type GifticonStatus = "ACTIVE" | "USED" | "EXPIRED";
+
 export interface CardSummary {
     cardId: number;
     name?: string;
@@ -9,11 +11,29 @@ export interface CardSummary {
     [key: string]: unknown;
 }
 
+interface WalletCardsEnvelope {
+    type: "CARD";
+    items: Array<{
+        id: number;
+        productName?: string;
+        issuer?: string;
+        last4?: string;
+        thisMonthSpend?: number;
+    }>;
+}
+
 export interface CardDetail extends CardSummary {
     [key: string]: unknown;
 }
 
-export type GifticonStatus = "ACTIVE" | "USED" | "EXPIRED";
+export interface CardBenefit {
+    id: number;
+    description: string;
+    category?: string;
+    brand?: string;
+    limitAmount?: number;
+    [key: string]: unknown;
+}
 
 export interface Gifticon {
     gifticonId: number;
@@ -53,15 +73,37 @@ export interface Membership {
 /** ───────── Cards ───────── */
 /** GET /wallet/cards */
 export async function getCards(): Promise<CardSummary[]> {
-    const res = await http.get<{ cards?: CardSummary[] } | CardSummary[]>("/wallet/cards");
+    type CardsApiResponse = WalletCardsEnvelope | CardSummary[];
+    const res = await http.get<CardsApiResponse>("/wallet/cards");
     const data = res.data;
-    return Array.isArray(data) ? data : data.cards ?? [];
+
+    if (Array.isArray(data)) return data;
+
+    if ("items" in data && Array.isArray(data.items)) {
+        return data.items.map((it) => ({
+            cardId: it.id,
+            name: it.productName,
+            issuer: it.issuer,
+            last4: it.last4,
+            thisMonthSpend: it.thisMonthSpend,
+        }));
+    }
+    return [];
 }
 
 /** GET /wallet/cards/{cardId} */
 export async function getCardDetail(cardId: number | string): Promise<CardDetail> {
     const res = await http.get<CardDetail>(`/wallet/cards/${cardId}`);
     return res.data;
+}
+
+/** GET /wallet/cards/{cardId}/benefits */
+export async function getCardBenefits(cardId: number | string): Promise<CardBenefit[]> {
+    const res = await http.get<{ benefits?: CardBenefit[] } | CardBenefit[]>(
+        `/wallet/cards/${cardId}/benefits`
+    );
+    const data = res.data;
+    return Array.isArray(data) ? data : data.benefits ?? [];
 }
 
 /** ───────── Gifticons ───────── */
@@ -118,11 +160,6 @@ export async function redeemGifticon(
     return res.data;
 }
 
-/** DELETE /wallet/gifticons/{gifticonId} */
-export async function deleteGifticon(gifticonId: number | string): Promise<void> {
-    await http.delete(`/wallet/gifticons/${gifticonId}`);
-}
-
 /** ───────── Memberships ───────── */
 /** GET /wallet/memberships */
 export async function getMemberships(): Promise<Membership[]> {
@@ -144,9 +181,4 @@ export async function createMembership(payload: {
 export async function getMembershipDetail(membershipId: number | string): Promise<Membership> {
     const res = await http.get<Membership>(`/wallet/memberships/${membershipId}`);
     return res.data;
-}
-
-/** DELETE /wallet/memberships/{membershipId} */
-export async function deleteMembership(membershipId: number | string): Promise<void> {
-    await http.delete(`/wallet/memberships/${membershipId}`);
 }

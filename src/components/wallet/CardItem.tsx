@@ -4,7 +4,7 @@ export interface CardItemProps {
     benefit?: string;       // 혜택 요약
     limit?: string;         // 한도 표시
     color?: string;         // 카드 배경 색상
-    onClick?: (cardId?: number) => void; // 카드 클릭 시 동작
+    onClick?: (cardId?: number) => void;
 }
 
 export default function CardItem({
@@ -19,8 +19,8 @@ export default function CardItem({
         <div
             onClick={() => onClick?.(cardId)}
             style={{
-                width: "280px",
-                height: "160px",
+                width: "220px",
+                height: "140px",
                 borderRadius: "16px",
                 background: color,
                 color: "white",
