@@ -12,6 +12,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import LoginPage from '@/pages/Auth/LoginPage';
 import WelcomePage from '@/pages/Auth/WelcomePage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
+import ReportPage from "@/pages/Report/ReportPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
             { path: 'auth/login', element: <LoginPage /> },
             { path: 'auth/register', element: <RegisterPage /> },
             { path: '*', element: <NotFoundPage /> },
+            { path: 'report', element: <ReportPage />},
         ],
     },
 ]);
