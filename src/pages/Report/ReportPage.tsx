@@ -1,98 +1,162 @@
 // src/pages/ReportPage/ReportPage.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 import Header from "@/components/layout/Header.tsx";
 import StatCard from "@/components/report/StatCard.tsx";
 import MonthNavigator from "@/components/report/MonthNavigator.tsx";
 import DonutChart from "@/components/report/DonutSection/DonutChart.tsx";
 import AiSummaryCard from "@/components/report/AiSummaryCard.tsx";
 import RecentTransactionCard from "@/components/report/Transaction/RecentTransactionCard.tsx";
+import {getReportPageData, formatYearMonth} from "@/api/reportApi.ts";
+import {ReportPageData} from "@/types/report";
 
 const ReportPage = () => {
-    const [selectedMonth, setSelectedMonth] = useState('7월');
-    const [aiSummary, setAiSummary] = useState('');
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [reportData, setReportData] = useState<ReportPageData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedDate, setSelectedDate] = useState(new Date());
 
+    // 리포트 데이터 조회 함수 (JWT 인증과 토큰 갱신은 http.ts에서 자동 처리)
+    const fetchReportData = async (year: number, month: number) => {
+        setLoading(true);
+        setError(null);
 
-    const handleMonthChange = (year: number, month: number) => {
-        setSelectedMonth(`${month}월`);
-        console.log(`선택된 날짜: ${year}년 ${month}월`);
-        // 여기서 선택된 년월에 따라 리포트 데이터를 다시 불러오는 로직 추가
-        // AI 분석도 다시 요청
-        getAiAnalysis();
-    };
-
-    // 카테고리별 지출 데이터 (백엔드 연동 시 API에서 받아올 데이터)
-    const categoryData = [
-        { name: '식비', value: 45000, color: '#5F0080' },
-        { name: '교통비', value: 32000, color: '#9B4DCC' },
-        { name: '쇼핑', value: 28000, color: '#B983DB' },
-        { name: '문화생활', value: 20000, color: '#E5D5F0' },
-        { name: '의료비', value: 15000, color: '#7B6EF6' },
-        { name: '기타', value: 12000, color: '#166534' }
-    ];
-
-    const totalAmount = categoryData.reduce((sum, item) => sum + item.value, 0);
-
-    // 최근 거래 데이터 (백엔드 연동 시 API에서 받아올 데이터)
-    const recentTransactions = [
-        {
-            id: '1',
-            storeName: '스타벅스',
-            amount: 4800,
-            cardCompany: '신한카드',
-            category: '카페',
-            reward: 1300
-        },
-        {
-            id: '2',
-            storeName: 'GS25',
-            amount: 3200,
-            cardCompany: 'KB국민',
-            category: '편의점',
-            reward: 400
-        },
-        {
-            id: '3',
-            storeName: '이마트',
-            amount: 25600,
-            cardCompany: '삼성카드',
-            category: '마트',
-            reward: 2100
-        }
-    ];
-
-
-    // AI 분석 요청 함수
-    const getAiAnalysis = async () => {
-        setIsAnalyzing(true);
         try {
-            // TODO: 실제 OpenAI API 호출로 교체
-            // const response = await fetch('/api/ai-analysis', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ categoryData, month: selectedMonth })
-            // });
-            // const result = await response.json();
-            // setAiSummary(result.summary);
+            const yearMonth = `${year}-${month.toString().padStart(2, '0')}`;
+            console.log(`리포트 데이터 조회: ${yearMonth}`);
 
-            // 임시 데모 데이터
-            setTimeout(() => {
-                setAiSummary(`식비 지출이 전체의 29.6%로 가장 높은 비중을 차지하고 있습니다. 외식보다는 집에서 요리하는 빈도를 늘려보는 것을 추천합니다.
+            // http.ts의 axios interceptor가 JWT 토큰과 갱신을 자동 처리
+            const data = await getReportPageData(yearMonth);
+            setReportData(data);
+            setSelectedDate(new Date(year, month - 1, 1));
 
-교통비와 쇼핑 비용도 상당한 비중을 차지하고 있어, 대중교통 이용이나 할인 혜택을 적극 활용해보시기 바랍니다.`);
-                setIsAnalyzing(false);
-            }, 2000);
-        } catch (error) {
-            console.error('AI 분석 오류:', error);
-            setAiSummary('분석 중 오류가 발생했습니다. 다시 시도해주세요.');
-            setIsAnalyzing(false);
+        } catch (error: any) {
+            console.error('리포트 데이터 로딩 실패:', error);
+
+            // axios 에러 처리
+            if (error.response?.status === 401) {
+                // http.ts에서 이미 토큰 갱신을 시도했지만 실패한 경우
+                // 자동으로 로그인 페이지로 리다이렉트됨
+                setError('인증이 만료되었습니다. 로그인 페이지로 이동합니다.');
+            } else if (error.response?.status >= 500) {
+                setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            } else {
+                setError('데이터를 불러오는 중 오류가 발생했습니다.');
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
-    // 컴포넌트 마운트 시 AI 분석 실행
-    React.useEffect(() => {
-        getAiAnalysis();
+    // 월 변경 핸들러
+    const handleMonthChange = (year: number, month: number) => {
+        fetchReportData(year, month);
+    };
+
+    // 현재 선택된 월 텍스트 생성
+    const getSelectedMonthText = () => {
+        return `${selectedDate.getMonth() + 1}월`;
+    };
+
+    // 재시도 핸들러
+    const handleRetry = () => {
+        const currentYear = selectedDate.getFullYear();
+        const currentMonth = selectedDate.getMonth() + 1;
+        fetchReportData(currentYear, currentMonth);
+    };
+
+    // 컴포넌트 마운트 시 현재 월 데이터 로드
+    useEffect(() => {
+        const currentDate = new Date();
+        fetchReportData(currentDate.getFullYear(), currentDate.getMonth() + 1);
     }, []);
+
+    // 로딩 상태
+    if (loading) {
+        return (
+            <>
+                <Header title="상세 리포트" showBackButton={false} showHomeButton={false} />
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '200px',
+                    color: 'var(--theme-text-light)',
+                    fontFamily: 'inherit'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12
+                    }}>
+                        <div style={{
+                            width: 20,
+                            height: 20,
+                            border: '2px solid var(--theme-secondary)',
+                            borderTop: '2px solid var(--theme-primary)',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                        }} />
+                        데이터를 불러오는 중...
+                    </div>
+                </div>
+                <style>{`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `}</style>
+            </>
+        );
+    }
+
+    // 에러 상태
+    if (error || !reportData) {
+        return (
+            <>
+                <Header title="상세 리포트" showBackButton={false} showHomeButton={false} />
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '200px',
+                    color: 'var(--theme-text-light)',
+                    gap: 16,
+                    padding: 20,
+                    fontFamily: 'inherit'
+                }}>
+                    <div style={{ textAlign: 'center' }}>
+                        {error || '데이터를 불러올 수 없습니다.'}
+                    </div>
+
+                    {/* 재시도 버튼 (http.ts가 인증 오류를 자동 처리하므로 간소화) */}
+                    <button
+                        onClick={handleRetry}
+                        style={{
+                            padding: '12px 24px',
+                            backgroundColor: 'var(--theme-primary)',
+                            color: 'var(--color-white)',
+                            border: 'none',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            fontSize: 14,
+                            fontWeight: '600',
+                            transition: 'opacity 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '0.9';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                        }}
+                    >
+                        다시 시도
+                    </button>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>

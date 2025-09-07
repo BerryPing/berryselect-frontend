@@ -49,28 +49,4 @@ const StatCard: React.FC<StatCardProps> = ({
     );
 };
 
-// 사용 예시 컴포넌트
-export const StatCardExample: React.FC = () => {
-    return (
-        <div style={{
-            display: 'flex',
-            gap: 16,
-            padding: 20
-        }}>
-            <StatCard
-                title="절감금액"
-                value="24,300원"
-                titleColor="#B47AD8"
-                valueColor="#793895"
-            />
-            <StatCard
-                title="추천 사용률"
-                value="68%"
-                titleColor="#B983DB"
-                valueColor="#753392"
-            />
-        </div>
-    );
-};
-
 export default StatCard;
