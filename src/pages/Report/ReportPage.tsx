@@ -5,6 +5,7 @@ import StatCard from "@/components/report/StatCard.tsx";
 import MonthNavigator from "@/components/report/MonthNavigator.tsx";
 import DonutChart from "@/components/report/DonutSection/DonutChart.tsx";
 import AiSummaryCard from "@/components/report/AiSummaryCard.tsx";
+import RecentTransactionCard from "@/components/report/Transaction/RecentTransactionCard.tsx";
 
 const ReportPage = () => {
     const [selectedMonth, setSelectedMonth] = useState('7월');
@@ -31,6 +32,35 @@ const ReportPage = () => {
     ];
 
     const totalAmount = categoryData.reduce((sum, item) => sum + item.value, 0);
+
+    // 최근 거래 데이터 (백엔드 연동 시 API에서 받아올 데이터)
+    const recentTransactions = [
+        {
+            id: '1',
+            storeName: '스타벅스',
+            amount: 4800,
+            cardCompany: '신한카드',
+            category: '카페',
+            reward: 1300
+        },
+        {
+            id: '2',
+            storeName: 'GS25',
+            amount: 3200,
+            cardCompany: 'KB국민',
+            category: '편의점',
+            reward: 400
+        },
+        {
+            id: '3',
+            storeName: '이마트',
+            amount: 25600,
+            cardCompany: '삼성카드',
+            category: '마트',
+            reward: 2100
+        }
+    ];
+
 
     // AI 분석 요청 함수
     const getAiAnalysis = async () => {
@@ -72,7 +102,7 @@ const ReportPage = () => {
             <div style={{
                 display: "flex",
                 gap: 16,
-                padding: "10px 20px 10px 20px"
+                padding: "20px 20px 20px 20px"
             }}>
                 <StatCard title="절감금액" value="24,300원" />
                 <StatCard title="추천 사용률" value="68%" />
@@ -130,6 +160,37 @@ const ReportPage = () => {
                 <AiSummaryCard
                     summary={aiSummary}
                     isLoading={isAnalyzing}
+                />
+            </div>
+
+            {/* 최근 거래 영역 */}
+            <div style={{
+                padding: "0px 20px 10px 20px",
+                display: "flex",
+                justifyContent: "flex-start"
+            }}>
+                <div style={{
+                    justifyContent: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    color: 'var(--theme-text)',
+                    fontSize: 15.2,
+                    fontFamily: 'inherit',
+                    fontWeight: '800',
+                    wordWrap: 'break-word'
+                }}>
+                    최근 거래
+                </div>
+            </div>
+
+            <div style={{
+                padding: "0px 20px 30px 20px",
+                display: "flex",
+                justifyContent: "center"
+            }}>
+                <RecentTransactionCard
+                    transactions={recentTransactions}
+                    title=""
                 />
             </div>
         </>

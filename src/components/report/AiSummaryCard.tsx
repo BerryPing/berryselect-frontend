@@ -82,26 +82,4 @@ const AiSummaryCard: React.FC<AiSummaryCardProps> = ({
     );
 };
 
-// 사용 예시 컴포넌트
-export const AiSummaryCardExample: React.FC = () => {
-    const sampleSummary = `관광 지출이 전체의 1.7%로 낮은 편이므로, 다음 여행에서는 더 다양한 체험 활동을 고려해보는 것도 좋겠습니다.
-
-교통 및 숙박 지출이 전체의 73%로 압도적으로 높은 비중을 차지해, 조기 예약이나 대중교통 이용 등도 검토해볼 수 있습니다.`;
-
-    return (
-        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <h3>AI 분석 카드 예시</h3>
-
-            {/* 정상 상태 */}
-            <AiSummaryCard summary={sampleSummary} />
-
-            {/* 로딩 상태 */}
-            <AiSummaryCard summary="" isLoading={true} />
-
-            {/* 빈 상태 */}
-            <AiSummaryCard summary="" />
-        </div>
-    );
-};
-
 export default AiSummaryCard;
