@@ -1,43 +1,37 @@
+import { Calendar } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import SectionBox from "@/components/common/SectionBox";
-import styles from "./WalletPage.module.css";
 import Modal from "@/components/common/Modal";
 import Button from "@/components/common/Button";
-import {
-    getGifticons,
-    type Gifticon,
-    createGifticonByImage,
-    createGifticonByNumber,
-    updateGifticonStatus,
-} from "@/api/walletApi";
+import { getGifticons, type Gifticon, createGifticon, createGifticonByImage, type GifticonCreateReq } from "@/api/walletApi";
 import { getGiftImage } from "@/components/wallet/GifticonCatalog";
-
-/** 너가 walletApi에 추가해야 하는 함수 형태(예시)
- export type ScanResult = {
- brand?: string | null;
- name?: string | null;
- barcode?: string | null;
- expiresAt?: string | null; // 'YYYY-MM-DD'
- faceValue?: number | null;
- };
-
- export async function scanGifticon(file: File): Promise<ScanResult> { ... }
-
- export type CreateGifticonPayload = {
- brand?: string | null;
- name?: string | null;
- barcode?: string | null;
- expiresAt?: string | null;
- // 필요하면 issuer/faceValue 등 추가
- };
-
- export async function createGifticon(payload: CreateGifticonPayload): Promise<void> { ... }
- */
+import { scanGifticon } from "@/components/wallet/GifticonScan";
+import JsBarcode from "jsbarcode";
+import styles from "./WalletPage.module.css";
 
 type Filter = "ACTIVE" | "EXPIRED" | "USED";
+type DateInputWithPicker = HTMLInputElement & { showPicker?: () => void };
+
+/** 신규 등록 건에만 고정 표시값 적용 */
+const FORCED_BRAND = "스타벅스";
+const FORCED_PRODUCT = "아이스 아메리카노 T 2잔";
+
+/** products(id) 더미 고정 */
+const DEFAULT_PRODUCT_ID = 13;
+// const DEFAULT_PRODUCT_ID: number | null = null;
+
+/** "브랜드 상품명" -> 브랜드/상품 분리 */
+function splitName(fullName?: string | null) {
+    const s = (fullName ?? "").trim();
+    if (!s) return { brand: "-", product: "" };
+    const parts = s.split(/\s+/);
+    if (parts.length === 1) return { brand: parts[0], product: "" };
+    return { brand: parts[0], product: parts.slice(1).join(" ") };
+}
 
 export default function GifticonSection() {
-    // 목록
+    // 목록/상태
     const [list, setList] = useState<Gifticon[]>([]);
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState<string | null>(null);
@@ -45,288 +39,454 @@ export default function GifticonSection() {
     // 필터
     const [filter, setFilter] = useState<Filter>("ACTIVE");
 
+    // 선택된 기프티콘
+    const [selected, setSelected] = useState<Gifticon | null>(null);
+
     // 업로드 & 스캔
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
     const [scanLoading, setScanLoading] = useState(false);
     const [scanError, setScanError] = useState<string | null>(null);
     const [openScanModal, setOpenScanModal] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [form, setForm] = useState<{
+        productId?: number | null;
         brand?: string | null;
         name?: string | null;
         barcode?: string | null;
         expiresAt?: string | null;
-    }>({});
+        amount?: number | null;
+    }>({ productId: DEFAULT_PRODUCT_ID });
 
-    // 초기 로드
+    // 바코드 캔버스
+    const barcodeCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    // 선택 미리보기(선택한 아이템의 name 기준 표시)
+    const { brand: previewBrand, product: previewProduct } = useMemo(
+        () => splitName(selected?.name),
+        [selected?.name]
+    );
+
+    // 바코드 + 숫자 표시
+    useEffect(() => {
+        const code = (selected?.code ?? "").trim();
+        const canvas = barcodeCanvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!code || !ctx) {
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+
+        try {
+            const format = /^\d{13}$/.test(code) ? "EAN13" : "CODE128";
+            JsBarcode(canvas, code, {
+                format,
+                margin: 8,
+                width: 2,
+                height: 64,
+                displayValue: true,
+                textMargin: 6,
+                font: "14px system-ui",
+                fontOptions: "bold",
+            });
+        } catch {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }, [selected?.code]);
+
+    // 초기 목록 로드
     const fetchList = async () => {
         try {
             setLoading(true);
             setErr(null);
             const res = await getGifticons();
-            setList(res);
+            setList(Array.isArray(res) ? res : []);
         } catch {
             setErr("기프티콘을 불러오지 못했습니다.");
         } finally {
             setLoading(false);
         }
     };
-
     useEffect(() => {
         fetchList();
     }, []);
 
-    // 필터링된 목록
-    const filtered = useMemo(() => {
-        return list.filter((g) => (g.status as Filter) === filter);
-    }, [list, filter]);
+    // 목록 변경 시 기본 선택
+    useEffect(() => {
+        if (Array.isArray(list) && list.length > 0) setSelected(list[0]);
+        else setSelected(null);
+    }, [list]);
 
-    // 업로드 버튼 → 파일 선택
+    // 미리보기 URL 정리
+    useEffect(() => {
+        return () => {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+        };
+    }, [previewUrl]);
+
+    const closeScanModal = () => {
+        setOpenScanModal(false);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+        setSelectedFile(null);
+        setForm({ productId: DEFAULT_PRODUCT_ID }); // 기본값 유지
+        setScanError(null);
+    };
+
+    // 필터링 목록
+    const filtered = useMemo(
+        () => (Array.isArray(list) ? list.filter((g) => ((g.status ?? "ACTIVE") as Filter) === filter) : []),
+        [list, filter]
+    );
+
     const handleClickUpload = () => fileInputRef.current?.click();
 
-    // 파일 선택 → OCR/바코드 스캔
+    // 파일 선택 → 스캔 실행(바코드/만료일/금액), 이름/브랜드는 강제값
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
+        const file = e.target.files?.[0] ?? null;
         if (!file) return;
 
+        if (!file.type.startsWith("image/")) {
+            setScanError("이미지 파일만 업로드해 주세요.");
+            e.target.value = "";
+            return;
+        }
+        const MAX = 8 * 1024 * 1024;
+        if (file.size > MAX) {
+            setScanError("이미지 용량이 너무 큽니다. 8MB 이하로 올려주세요.");
+            e.target.value = "";
+            return;
+        }
+
+        setSelectedFile(file);
         setScanError(null);
         setScanLoading(true);
         setOpenScanModal(true);
         setPreviewUrl(URL.createObjectURL(file));
 
         try {
-            // 너의 walletApi에 구현해둔 스캔 함수 호출
-            const { scanGifticon } = await import("@/api/walletApi");
-            const result = await scanGifticon(file);
-            setForm({
-                brand: result.brand ?? "",
-                name: result.name ?? "",
-                barcode: result.barcode ?? "",
-                expiresAt: result.expiresAt ?? "",
-            });
-        } catch (e) {
+            const r = await scanGifticon(file);
+            setForm((f) => ({
+                ...f,
+                productId: DEFAULT_PRODUCT_ID,
+                brand: FORCED_BRAND,            // 고정
+                name: FORCED_PRODUCT,           // 고정
+                barcode: r.barcode ?? "",
+                expiresAt: r.expiresAt ?? "",
+                amount: r.faceValue ?? null,
+            }));
+        } catch {
             setScanError("스캔 중 오류가 발생했습니다. 수동으로 입력해 주세요.");
-            setForm({});
+            setForm({
+                productId: DEFAULT_PRODUCT_ID,
+                brand: FORCED_BRAND,
+                name: FORCED_PRODUCT,
+                barcode: "",
+                expiresAt: "",
+                amount: null,
+            });
         } finally {
             setScanLoading(false);
-            // 같은 파일 다시 선택 가능하게 초기화
             e.target.value = "";
         }
     };
 
-    // 스캔 모달에서 확정 → 등록 API
+// 등록
     const handleConfirmRegister = async () => {
+        setScanError(null);
+
+        if (!form.barcode && !form.name && !form.brand) {
+            setScanError("바코드 또는 브랜드/상품명 중 하나는 입력해 주세요.");
+            return;
+        }
+        if (form.barcode && !/^\d{6,}$/.test(form.barcode)) {
+            setScanError("바코드는 숫자 6자리 이상이어야 합니다.");
+            return;
+        }
+
         try {
-            const { createGifticon } = await import("@/api/walletApi");
-            await createGifticon({
-                brand: form.brand?.trim() || null,
-                name: form.name?.trim() || null,
-                barcode: form.barcode?.trim() || null,
-                expiresAt: form.expiresAt || null,
-            });
-            setOpenScanModal(false);
-            setPreviewUrl(null);
-            setForm({});
-            await fetchList(); // 목록 갱신
-        } catch {
-            setScanError("등록 중 오류가 발생했습니다.");
+            const pid = form.productId ?? DEFAULT_PRODUCT_ID;
+            if (!pid) {
+                setScanError("상품(productId)을 선택해 주세요.");
+                return;
+            }
+
+            const barcode = (form.barcode ?? "").trim();
+            let created: Gifticon;
+
+            if (selectedFile) {
+                // ✅ 파일이 있으면 항상 multipart로! (바코드/만료일/금액도 함께 전달)
+                created = await createGifticonByImage({
+                    file: selectedFile,
+                    productId: pid,
+                    barcode: barcode || undefined,
+                    balance: form.amount ?? undefined,
+                    expiresAt: form.expiresAt || undefined,
+                });
+            } else {
+                // ✅ 파일이 없을 때만 JSON 경로 사용
+                const payload: GifticonCreateReq = {
+                    productId: pid,
+                    barcode, // JSON 경로는 barcode 필수일 가능성 큼
+                };
+                if (form.amount != null) payload.balance = form.amount;
+                if (form.expiresAt) payload.expiresAt = form.expiresAt;
+
+                created = await createGifticon(payload);
+            }
+
+            // 방금 생성한 **한 건만** 강제 표기명으로 보이도록
+            const createdForced: Gifticon = {
+                ...created,
+                name: `${FORCED_BRAND} ${FORCED_PRODUCT}`,
+            };
+
+            setList((prev) => [createdForced, ...prev]);
+            setSelected(createdForced);
+            closeScanModal();
+        } catch (e) {
+            console.error("create gifticon error:", e);
+
+            const httpErr = e as { response?: { status?: number; data?: { message?: string; error?: string } }; message?: string };
+            const serverMsg =
+                httpErr.response?.data?.message ||
+                httpErr.response?.data?.error ||
+                (httpErr.response?.status ? `HTTP ${httpErr.response.status}` : "") ||
+                httpErr.message;
+            setScanError(serverMsg || "등록 중 오류가 발생했습니다.");
         }
     };
 
-    // 상태 뱃지
-    const Badge = ({ status }: { status: string }) => {
-        const map: Record<string, string> = {
-            ACTIVE: "var(--theme-primary)",
-            EXPIRED: "#999",
-            USED: "#c04d7b",
-        };
-        return (
-            <span
-                style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#fff",
-                    background: map[status] ?? "#999",
-                    borderRadius: 999,
-                    padding: "3px 8px",
-                }}
-            >
-        {status === "ACTIVE" ? "사용가능" : status === "EXPIRED" ? "만료" : "사용완료"}
-      </span>
-        );
-    };
+    // 만료일 입력 ref (아이콘으로 네이티브 date 열기)
+    const expireInputRef = useRef<HTMLInputElement | null>(null);
 
     return (
-        <SectionBox width={352} padding={16} outlined shadow={false}>
-            <div className={styles.sectionTitle}>보유 기프티콘</div>
-
-            {/* 필터 탭 */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                {([
-                    { key: "ACTIVE", label: "사용가능" },
-                    { key: "EXPIRED", label: "만료" },
-                    { key: "USED", label: "사용완료" },
-                ] as { key: Filter; label: string }[]).map((t) => (
-                    <button
-                        key={t.key}
-                        onClick={() => setFilter(t.key)}
+        <>
+            {/* 상단 미리보기 카드 */}
+            <SectionBox width={352} padding="0px 2px 0px" outlined shadow={false}>
+                <div className={styles.previewCard}>
+                    <div
+                        className={styles.previewThumb}
                         style={{
-                            height: 28,
-                            padding: "0 10px",
-                            borderRadius: 999,
-                            border:
-                                filter === t.key
-                                    ? "1px solid var(--theme-primary)"
-                                    : "1px solid var(--theme-secondary)",
-                            background: filter === t.key ? "var(--theme-bg)" : "#fff",
-                            fontWeight: 700,
+                            background: selected
+                                ? `url(${getGiftImage(selected?.name ?? "") ?? ""}) center/cover no-repeat`
+                                : "var(--theme-bg)",
                         }}
-                    >
-                        {t.label}
-                    </button>
-                ))}
-                <div style={{ marginLeft: "auto" }}>
-                    <Button onClick={handleClickUpload}>기프티콘 등록하기</Button>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        style={{ display: "none" }}
                     />
+                    <div className={styles.previewTexts}>
+                        <div className={styles.previewBrand}>{previewBrand}</div>
+                        <div className={styles.previewName}>{previewProduct}</div>
+                    </div>
+
+                    <div className={styles.previewBarcodeWrap}>
+                        <canvas ref={barcodeCanvasRef} className={styles.previewBarcodeCanvas} />
+                    </div>
                 </div>
+            </SectionBox>
+
+            {/* 업로드 버튼 */}
+            <div className={styles.uploadRow}>
+                <Button onClick={handleClickUpload}>기프티콘 등록하기</Button>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,image/heic,image/heif"
+                    onChange={handleFileChange}
+                    className={styles.hiddenFile}
+                />
             </div>
 
-            {loading && <div className={styles.loading}>불러오는 중…</div>}
-            {err && !loading && <div className={styles.error}>{err}</div>}
-            {!loading && !err && filtered.length === 0 && (
-                <div className={styles.empty}>목록이 없습니다.</div>
-            )}
+            {/* 등록된 기프티콘 리스트 */}
+            <SectionBox width={352} padding="0px 16px 23px" outlined shadow={false}>
+                <div className={styles.sectionTitle}>
+                    <br />
+                    등록된 기프티콘
+                </div>
 
-            {!loading && !err && filtered.length > 0 && (
-                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
-                    {filtered.map((g) => {
-                        const thumb = getGiftImage(g.name);
+                {/* 필터 탭 */}
+                <div className={styles.filterRow}>
+                    {([
+                        { key: "ACTIVE", label: "사용 가능" },
+                        { key: "EXPIRED", label: "만료" },
+                        { key: "USED", label: "사용 완료" },
+                    ] as { key: Filter; label: string }[]).map((t) => {
+                        const isSelected = filter === t.key;
                         return (
-                            <li
-                                key={g.gifticonId}
-                                style={{
-                                    display: "flex",
-                                    gap: 12,
-                                    alignItems: "center",
-                                    padding: "10px 12px",
-                                    border: "1px solid var(--theme-secondary)",
-                                    borderRadius: 12,
-                                    background: "#fff",
-                                }}
+                            <button
+                                key={t.key}
+                                onClick={() => setFilter(t.key)}
+                                className={`${styles.pill} ${isSelected ? styles.pillSelected : ""}`}
                             >
-                                <div
-                                    style={{
-                                        width: 60,
-                                        height: 60,
-                                        borderRadius: 8,
-                                        background: thumb
-                                            ? `url(${thumb}) center/cover no-repeat`
-                                            : "linear-gradient(145deg,#e9e9e9,#dcdcdc)",
-                                        flexShrink: 0,
-                                    }}
-                                />
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                        {g.brand ?? "-"}
-                                    </div>
-                                    <div
-                                        style={{
-                                            fontSize: 12,
-                                            color: "var(--theme-light-gray)",
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                        }}
-                                        title={g.name ?? ""}
-                                    >
-                                        {g.name ?? "-"}
-                                    </div>
-                                </div>
-                                <Badge status={g.status ?? "ACTIVE"} />
-                            </li>
+                                {t.label}
+                            </button>
                         );
                     })}
-                </ul>
-            )}
+                </div>
 
-            {/* 스캔 결과 확인 모달 */}
-            <Modal open={openScanModal} onClose={() => setOpenScanModal(false)}>
-                <div className={styles.modalHeader}>기프티콘 등록</div>
+                {loading && <div className={styles.loading}>불러오는 중…</div>}
+                {err && !loading && <div className={styles.error}>{err}</div>}
+                {!loading && !err && filtered.length === 0 && (
+                    <div className={styles.empty}>목록이 없습니다.</div>
+                )}
+
+                {!loading && !err && filtered.length > 0 && (
+                    <ul className={styles.gifticonList}>
+                        {filtered.map((g) => {
+                            // 각 아이템은 **자기 자신의 name**을 사용
+                            const nameForCard = g.name ?? "";
+                            const thumb = getGiftImage(nameForCard);
+                            const { brand, product } = splitName(nameForCard);
+
+                            const safeKey =
+                                g.gifticonId ??
+                                `${g.code ?? "no-code"}__${nameForCard || "no-name"}__${g.expireDate ?? "no-exp"}`;
+
+                            return (
+                                <li
+                                    key={String(safeKey)}
+                                    className={styles.gifticonItem}
+                                    onClick={() => setSelected(g)}
+                                >
+                                    <div
+                                        className={styles.thumb}
+                                        style={{
+                                            background: thumb ? `url(${thumb}) center/cover no-repeat` : "var(--theme-bg)",
+                                        }}
+                                        title={nameForCard}
+                                    />
+                                    <div className={styles.itemText}>
+                                        <div className={styles.brand} title={brand}>
+                                            {brand}
+                                        </div>
+                                        <div className={styles.name} title={product}>
+                                            {product}
+                                        </div>
+                                    </div>
+                                    <StatusPill status={(g.status as string) ?? "ACTIVE"} />
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </SectionBox>
+
+            {/* 스캔/수동입력 모달 */}
+            <Modal open={openScanModal} onClose={closeScanModal}>
+                <div className={styles.modalGrip} />
+                <div className={styles.modalHeaderNoBorder}>사진함</div>
+
                 <div className={styles.modalBody}>
-                    {scanLoading && <div className={styles.loading}>스캔 중…</div>}
-                    {scanError && <div className={styles.error} style={{ marginBottom: 8 }}>{scanError}</div>}
-
-                    <div style={{ display: "flex", gap: 12 }}>
+                    {/* 미리보기 */}
+                    <div className={styles.previewWrap}>
                         <div
+                            className={styles.previewBox}
                             style={{
-                                width: 96,
-                                height: 96,
-                                borderRadius: 8,
-                                background: previewUrl
-                                    ? `url(${previewUrl}) center/cover no-repeat`
-                                    : "linear-gradient(145deg,#e9e9e9,#dcdcdc)",
-                                flexShrink: 0,
+                                background: previewUrl ? `url(${previewUrl}) center/cover no-repeat` : "#D9D9D9",
                             }}
                         />
-                        <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: 12, color: "#888" }}>브랜드</label>
-                            <input
-                                value={form.brand ?? ""}
-                                onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
-                                style={inputStyle}
-                                placeholder="예) MEGACOFFEE"
-                            />
-                            <label style={{ fontSize: 12, color: "#888" }}>상품명</label>
+                    </div>
+
+                    {/* 입력 영역 */}
+                    <div className={styles.modalScroll}>
+                        {scanLoading && <div className={styles.loading}>스캔 중…</div>}
+                        {scanError && <div className={styles.error}>{scanError}</div>}
+
+                        <Field label="상품명">
                             <input
                                 value={form.name ?? ""}
                                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                                style={inputStyle}
-                                placeholder="예) 메가커피 복숭아아이스티"
+                                className={styles.input}
+                                placeholder="상품명을 입력해 주세요"
                             />
-                            <label style={{ fontSize: 12, color: "#888" }}>바코드</label>
+                        </Field>
+
+                        <Field label="기프티콘 번호">
                             <input
                                 value={form.barcode ?? ""}
                                 onChange={(e) => setForm((f) => ({ ...f, barcode: e.target.value }))}
-                                style={inputStyle}
-                                placeholder="숫자"
+                                className={styles.input}
+                                placeholder="기프티콘 번호를 입력해 주세요"
                             />
-                            <label style={{ fontSize: 12, color: "#888" }}>유효기간</label>
+                        </Field>
+
+                        <Field label="교환처/브랜드">
                             <input
-                                type="date"
-                                value={form.expiresAt ?? ""}
-                                onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))}
-                                style={inputStyle}
+                                value={form.brand ?? ""}
+                                onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
+                                className={styles.input}
+                                placeholder="교환처/브랜드를 입력해 주세요"
                             />
-                        </div>
+                        </Field>
+
+                        <Field label="만료일">
+                            <div className={styles.dateField}>
+                                <input
+                                    ref={expireInputRef}
+                                    type="date"
+                                    required
+                                    value={form.expiresAt ?? ""}
+                                    onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))}
+                                    className={`${styles.input} ${styles.inputDate}`}
+                                />
+                                <button
+                                    type="button"
+                                    className={styles.dateIconBtn}
+                                    onClick={() => {
+                                        const el = expireInputRef.current as DateInputWithPicker | null;
+                                        if (!el) return;
+                                        if (typeof el.showPicker === "function") el.showPicker();
+                                        else {
+                                            el.focus();
+                                            el.click?.();
+                                        }
+                                    }}
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        expireInputRef.current?.focus();
+                                    }}
+                                    aria-label="만료일 선택"
+                                >
+                                    <Calendar size={18} />
+                                </button>
+                            </div>
+                        </Field>
                     </div>
 
-                    <div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end" }}>
-                        <Button variant="secondary" onClick={() => setOpenScanModal(false)}>
+                    {/* 하단 고정 버튼 */}
+                    <div className={styles.modalActionsSticky}>
+                        <Button variant="gray" fullWidth onClick={closeScanModal}>
                             취소
                         </Button>
-                        <Button onClick={handleConfirmRegister} disabled={scanLoading}>
-                            등록
+                        <Button fullWidth onClick={handleConfirmRegister} disabled={scanLoading}>
+                            등록하기
                         </Button>
                     </div>
                 </div>
             </Modal>
-        </SectionBox>
+        </>
     );
 }
 
-const inputStyle: React.CSSProperties = {
-    width: "100%",
-    height: 36,
-    borderRadius: 8,
-    border: "1px solid var(--theme-secondary)",
-    padding: "0 10px",
-    margin: "4px 0 10px",
-    boxSizing: "border-box",
-    background: "#fff",
-};
+/* ───────── Sub Components ───────── */
+
+function StatusPill({ status }: { status: string }) {
+    const map: Record<string, { cls: string; label: string }> = {
+        ACTIVE: { cls: "active", label: "사용 가능" },
+        EXPIRED: { cls: "expired", label: "만료" },
+        USED: { cls: "used", label: "사용 완료" },
+    };
+    const s = map[status] ?? map.ACTIVE;
+    return <span className={`${styles.statusPill} ${styles[`status_${s.cls}`]}`}>{s.label}</span>;
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+    return (
+        <div className={styles.field}>
+            <div className={styles.fieldLabel}>{label}</div>
+            {children}
+        </div>
+    );
+}

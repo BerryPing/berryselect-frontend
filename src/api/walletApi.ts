@@ -1,17 +1,27 @@
+// src/api/walletApi.ts
 import http from "./http";
 
-/** ───────── Types ───────── */
+/* =====================
+ * 공통 타입
+ * ===================== */
 export type GifticonStatus = "ACTIVE" | "USED" | "EXPIRED";
 
+/* =====================
+ * Cards
+ * ===================== */
 export interface CardSummary {
     cardId: number;
     name?: string;
     issuer?: string;
     last4?: string;
+    thisMonthSpend?: number;
+    [key: string]: unknown;
+}
+export interface CardDetail extends CardSummary {
     [key: string]: unknown;
 }
 
-interface WalletCardsEnvelope {
+type CardsEnvelope = {
     type: "CARD";
     items: Array<{
         id: number;
@@ -19,68 +29,15 @@ interface WalletCardsEnvelope {
         issuer?: string;
         last4?: string;
         thisMonthSpend?: number;
+        [key: string]: unknown;
     }>;
-}
-
-export interface CardDetail extends CardSummary {
-    [key: string]: unknown;
-}
-
-export interface CardBenefit {
-    id: number;
-    description: string;
-    category?: string;
-    brand?: string;
-    limitAmount?: number;
-    [key: string]: unknown;
-}
-
-export interface Gifticon {
-    gifticonId: number;
-    code?: string;
-    brand?: string;
-    name?: string;
-    expireDate?: string; // 'YYYY-MM-DD'
-    amount?: number;
-    status?: GifticonStatus;
-    [key: string]: unknown;
-}
-
-export type GifticonCreateByNumberReq = {
-    code: string;
-    brand?: string;
-    name?: string;
-    expireDate?: string;
-    amount?: number;
 };
 
-export type GifticonCreateByImageReq = {
-    file: File;
-    brand?: string;
-    name?: string;
-    expireDate?: string;
-    amount?: number;
-};
-
-export interface Membership {
-    membershipId: number;
-    program?: string;
-    membershipNumber?: string;
-    tier?: string;
-    [key: string]: unknown;
-}
-
-/** ───────── Cards ───────── */
-/** GET /wallet/cards */
 export async function getCards(): Promise<CardSummary[]> {
-    type CardsApiResponse = WalletCardsEnvelope | CardSummary[];
-    const res = await http.get<CardsApiResponse>("/wallet/cards");
-    const data = res.data;
-
-    if (Array.isArray(data)) return data;
-
-    if ("items" in data && Array.isArray(data.items)) {
-        return data.items.map((it) => ({
+    const res = await http.get<CardsEnvelope>("/wallet/cards");
+    const body = res.data;
+    if (body?.type === "CARD" && Array.isArray(body.items)) {
+        return body.items.map((it) => ({
             cardId: it.id,
             name: it.productName,
             issuer: it.issuer,
@@ -98,58 +55,107 @@ export async function getCardDetail(cardId: number | string): Promise<CardDetail
 }
 
 /** GET /wallet/cards/{cardId}/benefits */
+export interface CardBenefit {
+    id: number;
+    description: string;
+    category?: string;
+    brand?: string;
+    limitAmount?: number;
+    [key: string]: unknown;
+}
+type CardBenefitsEnvelope = CardBenefit[] | { benefits?: CardBenefit[] };
+
 export async function getCardBenefits(cardId: number | string): Promise<CardBenefit[]> {
-    const res = await http.get<{ benefits?: CardBenefit[] } | CardBenefit[]>(
-        `/wallet/cards/${cardId}/benefits`
-    );
+    const res = await http.get<CardBenefitsEnvelope>(`/wallet/cards/${cardId}/benefits`);
     const data = res.data;
     return Array.isArray(data) ? data : data.benefits ?? [];
 }
 
-/** ───────── Gifticons ───────── */
-/** GET /wallet/gifticons */
-export async function getGifticons(): Promise<Gifticon[]> {
-    const res = await http.get<Gifticon[]>("/wallet/gifticons");
-    return res.data;
+/* =====================
+ * Gifticons
+ * ===================== */
+/** 프론트 표준 Gifticon (섹션 컴포넌트와 호환) */
+export interface Gifticon {
+    gifticonId: number;
+    code?: string;        // = barcode
+    name?: string;        // = productName or name
+    amount?: number;      // = balance
+    expireDate?: string;  // = expiresAt (yyyy-MM-dd)
+    status?: GifticonStatus;
+    [key: string]: unknown;
 }
 
-/** POST /wallet/gifticons (번호 입력: JSON) */
-export async function createGifticonByNumber(payload: GifticonCreateByNumberReq): Promise<Gifticon> {
-    const res = await http.post<Gifticon>("/wallet/gifticons", payload);
-    return res.data;
+type GifticonListEnvelope = {
+    type: "GIFTICON";
+    items: Array<Record<string, unknown>>; // { id, productName, barcode, balance, expiresAt, status }
+};
+type GifticonDetailApi = Record<string, unknown>;
+
+/** 목록: GET /wallet/gifticons (status, soonDays, page, size, sort 옵션) */
+export async function getGifticons(params?: {
+    status?: GifticonStatus;
+    soonDays?: number;
+    page?: number;
+    size?: number;
+    sort?: string; // e.g. "expiresAt,asc"
+}): Promise<Gifticon[]> {
+    const res = await http.get<GifticonListEnvelope>("/wallet/gifticons", { params });
+    const env = res.data;
+    if (env?.type !== "GIFTICON" || !Array.isArray(env.items)) return [];
+    return env.items.map(normalizeGifticon);
 }
 
-/** POST /wallet/gifticons (이미지 업로드: multipart/form-data) */
-export async function createGifticonByImage(payload: GifticonCreateByImageReq): Promise<Gifticon> {
-    const form = new FormData();
-    form.append("file", payload.file);
-    if (payload.brand) form.append("brand", payload.brand);
-    if (payload.name) form.append("name", payload.name);
-    if (payload.expireDate) form.append("expireDate", payload.expireDate);
-    if (payload.amount != null) form.append("amount", String(payload.amount));
-
-    const res = await http.post<Gifticon>("/wallet/gifticons", form);
-    return res.data;
-}
-
-/** GET /wallet/gifticons/{gifticonId} */
+/** 상세: GET /wallet/gifticons/{gifticonId} */
 export async function getGifticonDetail(gifticonId: number | string): Promise<Gifticon> {
-    const res = await http.get<Gifticon>(`/wallet/gifticons/${gifticonId}`);
-    return res.data;
+    const res = await http.get<GifticonDetailApi>(`/wallet/gifticons/${gifticonId}`);
+    return normalizeGifticon(res.data);
 }
 
-/** PUT /wallet/gifticons/{gifticonId}?status=ACTIVE|USED|EXPIRED */
+/** 등록(JSON): POST /wallet/gifticons (consumes: application/json) */
+export type GifticonCreateReq = {
+    productId: number;
+    barcode: string;
+    balance?: number;
+    expiresAt?: string; // yyyy-MM-dd
+};
+export async function createGifticon(payload: GifticonCreateReq): Promise<Gifticon> {
+    const res = await http.post<GifticonDetailApi>("/wallet/gifticons", payload);
+    return normalizeGifticon(res.data);
+}
+
+/** 등록(Multipart): POST /wallet/gifticons (consumes: multipart/form-data) */
+export async function createGifticonByImage(payload: {
+    file: File;
+    productId: number;
+    barcode?: string;
+    balance?: number;
+    expiresAt?: string;
+}): Promise<Gifticon> {
+    const form = new FormData();
+    form.append("image", payload.file); // 필드명 반드시 "image"
+    form.append("productId", String(payload.productId));
+    if (payload.barcode) form.append("barcode", payload.barcode);
+    if (payload.balance != null) form.append("balance", String(payload.balance));
+    if (payload.expiresAt) form.append("expiresAt", payload.expiresAt);
+
+    const res = await http.post<GifticonDetailApi>("/wallet/gifticons", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+    return normalizeGifticon(res.data);
+}
+
+/** 상태 변경: PUT /wallet/gifticons/{gifticonId}?status=ACTIVE|USED|EXPIRED */
 export async function updateGifticonStatus(
     gifticonId: number | string,
     status: GifticonStatus
 ): Promise<Gifticon> {
-    const res = await http.put<Gifticon>(`/wallet/gifticons/${gifticonId}`, null, {
+    const res = await http.put<GifticonDetailApi>(`/wallet/gifticons/${gifticonId}`, null, {
         params: { status },
     });
-    return res.data;
+    return normalizeGifticon(res.data);
 }
 
-/** POST /wallet/gifticons/{gifticonId}/redeem?usedAmount= */
+/** 사용 처리: POST /wallet/gifticons/{gifticonId}/redeem?usedAmount= */
 export async function redeemGifticon(
     gifticonId: number | string,
     usedAmount: number
@@ -157,28 +163,106 @@ export async function redeemGifticon(
     const res = await http.post(`/wallet/gifticons/${gifticonId}/redeem`, null, {
         params: { usedAmount },
     });
+    // 204(no content)일 수도 있으므로 그대로 반환
     return res.data;
 }
 
-/** ───────── Memberships ───────── */
-/** GET /wallet/memberships */
-export async function getMemberships(): Promise<Membership[]> {
-    const res = await http.get<Membership[]>("/wallet/memberships");
-    return res.data;
+/** 백엔드 → 프론트 표준 Gifticon 매핑 */
+function normalizeGifticon(raw: Record<string, unknown>): Gifticon {
+    const id = (raw.id as number) ?? (raw.gifticonId as number);
+    const productName =
+        (raw.productName as string) ??
+        (raw.name as string) ??
+        undefined;
+    const barcode =
+        (raw.barcode as string) ??
+        (raw.code as string) ??
+        undefined;
+    const balance =
+        (raw.balance as number) ??
+        (raw.amount as number) ??
+        undefined;
+    const expires =
+        (raw.expiresAt as string) ??
+        (raw.expireDate as string) ??
+        undefined;
+    const status =
+        (raw.status as GifticonStatus | undefined) ??
+        (raw.gifticonStatus as GifticonStatus | undefined);
+    const brand =
+        (raw.brand as string) ??
+        (raw.productBrand as string) ??
+        undefined;
+
+    return {
+        gifticonId: id!,
+        name: productName,
+        code: barcode,
+        amount: balance,
+        expireDate: expires,
+        status,
+        brand,
+    };
 }
 
-/** POST /wallet/memberships */
-export async function createMembership(payload: {
-    program: string;
-    membershipNumber: string;
+/* =====================
+ * Memberships
+ * ===================== */
+export interface Membership {
+    membershipId: number;
+    program?: string;
+    membershipNumber?: string;
     tier?: string;
-}): Promise<Membership> {
-    const res = await http.post<Membership>("/wallet/memberships", payload);
-    return res.data;
+    [key: string]: unknown;
+}
+
+type MembershipListEnvelope = {
+    type: "MEMBERSHIP";
+    items: Array<{
+        id: number;
+        name?: string;       // product.name
+        externalNo?: string; // membership number
+        level?: string;      // tier
+        [key: string]: unknown;
+    }>;
+};
+
+export async function getMemberships(): Promise<Membership[]> {
+    const res = await http.get<MembershipListEnvelope>("/wallet/memberships");
+    const env = res.data;
+    if (env?.type !== "MEMBERSHIP" || !Array.isArray(env.items)) return [];
+    return env.items.map((it) => ({
+        membershipId: it.id,
+        program: it.name,
+        membershipNumber: it.externalNo,
+        tier: it.level,
+    }));
 }
 
 /** GET /wallet/memberships/{membershipId} */
 export async function getMembershipDetail(membershipId: number | string): Promise<Membership> {
-    const res = await http.get<Membership>(`/wallet/memberships/${membershipId}`);
-    return res.data;
+    const res = await http.get<Record<string, unknown>>(`/wallet/memberships/${membershipId}`);
+    const raw = res.data;
+    return {
+        membershipId: (raw.id as number) ?? (raw.membershipId as number),
+        program: (raw.name as string) ?? (raw.program as string),
+        membershipNumber: (raw.externalNo as string) ?? (raw.membershipNumber as string),
+        tier: (raw.level as string) ?? (raw.tier as string),
+    };
+}
+
+/** POST /wallet/memberships */
+export async function createMembership(payload: {
+    productId: number;
+    externalNo: string;
+    level?: string;
+}): Promise<Membership> {
+    const res = await http.post<Record<string, unknown>>("/wallet/memberships", payload);
+    const raw = res.data;
+    return {
+        membershipId: (raw.id as number) ?? (raw.membershipId as number),
+        program: (raw.name as string) ?? (raw.program as string),
+        membershipNumber: (raw.externalNo as string) ?? (raw.membershipNumber as string),
+        tier: (raw.level as string) ?? (raw.tier as string),
+    };
 }

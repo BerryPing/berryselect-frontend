@@ -33,7 +33,19 @@ const Main = styled.main`
   flex:1 1 auto;
   padding-top:56px;   /* Header 높이 */
   padding-bottom:69px;/* Footer 높이 */
-  overflow-y: auto;  /* 스크롤 처리 */ 
+    
+    /* 스크롤은 유지하되(항상 공간 확보) 스크롤바는 숨기기 */
+    overflow-y: scroll;          /* <- 항상 스크롤 영역 확보 */
+    -ms-overflow-style: none;    /* IE/Edge(레거시) */
+    scrollbar-width: none;       /* Firefox */
+    &::-webkit-scrollbar {       /* Chrome/Safari */
+        width: 0;
+        height: 0;
+        display: none;
+    }
+
+    /* 탭 전환 시 가로폭 흔들림 방지(지원 브라우저에서 추가 안정화) */
+    scrollbar-gutter: stable both-edges;
 `;
 
 const DefaultLayout: React.FC = () => {

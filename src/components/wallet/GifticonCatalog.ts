@@ -18,13 +18,13 @@ const GIFTICON_CATALOG: Record<string, GiftMeta> = {
         brand: "SULBING",
     },
     "GS25 크라운 밤양갱": {
-        imageUrl: "https://cdn.imweb.me/thumbnail/20230605/26e17d3894aa0.png",
+        imageUrl: "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNDA0MjBfNjcg%2FMDAxNzEzNTQ0MDM4MzEw.YA5L-gOTXGmxjyrGuSZkqD4XsBDjPYBYstQSqs-FM6wg.cURZk7sfI6cxq1MjNHN00hvHkoKfzrqFwAj-t8ZnXpIg.PNG%2Fimage.png&type=sc960_832",
         aliases: ["크라운)밤양갱"],
         brand: "GS25",
     },
     "올리브영 금액권 2만원": {
         imageUrl:
-            "https://d2gfz7wkiigkmv.cloudfront.net/pickin/2/1/2/FRV-T2p3RcOG5hsmJMxUbA",
+            "https://img1.kakaocdn.net/thumb/C320x320@2x.fwebp.q82/?fname=https%3A%2F%2Fst.kakaocdn.net%2Fproduct%2Fgift%2Fproduct%2F20250213140743_c89d9f5bf9104daca2611dd7b9357805.jpg",
         aliases: ["올리브영 기프티카드 2만원권"],
         brand: "OLIVEYOUNG",
     },
