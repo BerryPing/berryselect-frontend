@@ -1,4 +1,3 @@
-// src/api/http.ts
 import axios, { AxiosError, AxiosHeaders } from "axios";
 import type { AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from "axios";
 
@@ -19,9 +18,11 @@ api.interceptors.request.use((config) => {
         } else {
             (config.headers as RawAxiosRequestHeaders)["Authorization"] = `Bearer ${token}`;
         }
+
     }
     return config;
 });
+
 
 api.interceptors.response.use(
     (res) => res,
@@ -68,3 +69,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+
