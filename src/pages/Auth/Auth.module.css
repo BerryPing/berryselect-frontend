@@ -26,18 +26,18 @@
 .categoryButton {
     display: inline-flex;
     align-items: center;
-    min-height: 37px;              /* 캡처 높이 맞춤 */
-    padding: 10px 14px;            /* 비선택 패딩 */
+    min-height: 37px;
+    padding: 10px 14px;
     border-radius: 20px;
     font-size: 13.6px;
     font-weight: 400;
     background: #fff;
-    color: var(--theme-text); /* 텍스트는 보라빛 다크 */
-    border: 1px solid var(--theme-secondary); /* 연보라 */
+    color: var(--theme-text);
+    border: 1px solid var(--theme-secondary);
     transition: border-color .15s ease, box-shadow .15s ease, transform .05s ease;
     outline: none;
     cursor: pointer;
-    -webkit-tap-highlight-color: transparent; /* 모바일 탭 하이라이트 제거 */
+    -webkit-tap-highlight-color: transparent;
 }
 .categoryButton:focus { outline: none; }
 .categoryButton:active { box-shadow: none; }
@@ -111,7 +111,7 @@
     width: 44px;
     height: 24px;
     border-radius: 9999px;
-    background: #ece8f1;                  /* OFF 트랙 */
+    background: #ece8f1;
     border: 1px solid #e0d3eb;
     position: relative;
     cursor: pointer;
@@ -137,12 +137,12 @@
 
 /* ON 상태 */
 .switch:checked {
-    background: var(--theme-primary);                 /* 보라 트랙 */
+    background: var(--theme-primary);
     border-color: var(--theme-primary);
 }
 
 .switch:checked::after {
-    transform: translate(20px, -50%);    /* 오른쪽으로 이동 */
+    transform: translate(20px, -50%);
 }
 
 /* 키보드 포커스 */
@@ -191,16 +191,16 @@
     color: var(--theme-text-light);
 }
 
-/* 커스텀 체크박스 */
+/* 체크박스 */
 .check {
     -webkit-appearance: none;
     appearance: none;
     width: 18px;
     height: 18px;
     border-radius: 4px;
-    border: 1.5px solid #caaee0;          /* 연보라 보더 */
+    border: 1.5px solid #caaee0;
     background: #fff;
-    margin-top: 2px;                       /* 텍스트와 수직 정렬 */
+    margin-top: 2px;
     cursor: pointer;
     outline: none;
     transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
@@ -210,11 +210,11 @@
 
 /* 체크 상태 */
 .check:checked {
-    background: var(--theme-primary);                   /* 진보라 배경 */
+    background: var(--theme-primary);
     border-color: var(--theme-primary);
 }
 
-/* 체크 표시(하얀 V) */
+/* 체크 표시 */
 .check:checked::after {
     content: "";
     position: absolute;
@@ -232,16 +232,16 @@
 .check:hover { border-color: #a57bcc; }
 .check:focus-visible { box-shadow: 0 0 0 3px rgba(95,0,128,.18); }
 
-/* 고대비 모드 대응 */
+
 @media (forced-colors: active) {
     .check { forced-color-adjust: none; }
 }
 
 .primaryAction {
     display: block;
-    margin: 8px auto;        /* 중앙 정렬 */
-    width: 80%;               /* 부모 대비 80% 너비 */
-    max-width: 320px;         /* 최대 320px까지만 늘어남 */
+    margin: 8px auto;
+    width: 80%;
+    max-width: 320px;
     height: 44px;
     border: none;
     border-radius: 12px;

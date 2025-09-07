@@ -24,15 +24,11 @@ export async function logout() {
     } catch (err) {
         console.error("로그아웃 API 실패(무시하고 클라이언트 세션만 정리):", err);
     } finally {
-        // ✅ 클라이언트 세션 완전 초기화
+        // 클라이언트 세션 완전 초기화
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         sessionStorage.removeItem("pendingRegister"); // 온보딩 플래그 정리
 
-        // 필요 시 앱 전역 상태(Store) 초기화도 여기서
-        // store.reset() 등...
-
-        // 하드 리로드가 깔끔함(라우트/캐시 이슈 예방)
         window.location.href = "/auth/login";
     }
 }
@@ -67,7 +63,7 @@ export async function refreshAccessToken(): Promise<string> {
 
             console.error("토큰 재발급 실패, 강제 로그아웃:", status, err);
 
-            await logout(); // 위에서 스토리지/상태 모두 초기화
+            await logout();
             throw err;
         } finally {
             refreshPromise = null;

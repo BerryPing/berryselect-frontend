@@ -5,7 +5,6 @@ export default function AuthCallback() {
     const navigate = useNavigate();
     const { pathname } = useLocation();
 
-    // ✅ 무조건 최상단에서 호출
     const ranRef = useRef(false);
 
     useEffect(() => {
