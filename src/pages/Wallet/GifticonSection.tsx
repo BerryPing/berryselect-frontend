@@ -4,7 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import SectionBox from "@/components/common/SectionBox";
 import Modal from "@/components/common/Modal";
 import Button from "@/components/common/Button";
-import { getGifticons, type Gifticon, createGifticon, createGifticonByImage, type GifticonCreateReq } from "@/api/walletApi";
+import {
+    getGifticons,
+    type Gifticon,
+    createGifticon,
+    createGifticonByImage,
+    type GifticonCreateReq,
+} from "@/api/walletApi";
 import { getGiftImage } from "@/components/wallet/GifticonCatalog";
 import { scanGifticon } from "@/components/wallet/GifticonScan";
 import JsBarcode from "jsbarcode";
@@ -19,15 +25,32 @@ const FORCED_PRODUCT = "아이스 아메리카노 T 2잔";
 
 /** products(id) 더미 고정 */
 const DEFAULT_PRODUCT_ID = 13;
-// const DEFAULT_PRODUCT_ID: number | null = null;
 
-/** "브랜드 상품명" -> 브랜드/상품 분리 */
+/** "브랜드 상품명" -> 브랜드/상품 분리(fallback용) */
 function splitName(fullName?: string | null) {
     const s = (fullName ?? "").trim();
     if (!s) return { brand: "-", product: "" };
     const parts = s.split(/\s+/);
     if (parts.length === 1) return { brand: parts[0], product: "" };
     return { brand: parts[0], product: parts.slice(1).join(" ") };
+}
+
+/** 표시용 데이터 만들기: brand가 있으면 우선 사용, 없으면 name 파싱 */
+function deriveDisplay(g: { name?: string | null; brand?: string | null }) {
+    const rawName = (g.name ?? "").trim();
+    const brand = (g.brand ?? "").trim();
+
+    if (brand) {
+        const product = rawName.startsWith(brand)
+            ? rawName.slice(brand.length).trim()
+            : rawName;
+        const fullForImage = product ? `${brand} ${product}` : brand;
+        return { brand, product, fullForImage };
+    }
+
+    const { brand: b2, product: p2 } = splitName(rawName);
+    const fullForImage = p2 ? `${b2} ${p2}` : b2;
+    return { brand: b2, product: p2, fullForImage };
 }
 
 export default function GifticonSection() {
@@ -55,18 +78,23 @@ export default function GifticonSection() {
         brand?: string | null;
         name?: string | null;
         barcode?: string | null;
-        expiresAt?: string | null;
-        amount?: number | null;
+        expiresAt?: string | null; // yyyy-MM-dd
+        amount?: number | null; // balance
     }>({ productId: DEFAULT_PRODUCT_ID });
 
     // 바코드 캔버스
     const barcodeCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-    // 선택 미리보기(선택한 아이템의 name 기준 표시)
-    const { brand: previewBrand, product: previewProduct } = useMemo(
-        () => splitName(selected?.name),
-        [selected?.name]
-    );
+    // 선택 미리보기(선택한 아이템의 brand/name 기준 표시)
+    const { brand: previewBrand, product: previewProduct, fullForImage: previewFull } =
+        useMemo(
+            () =>
+                deriveDisplay({
+                    name: selected?.name,
+                    brand: (selected?.brand as string | undefined) ?? null,
+                }),
+            [selected?.name, selected?.brand]
+        );
 
     // 바코드 + 숫자 표시
     useEffect(() => {
@@ -103,7 +131,14 @@ export default function GifticonSection() {
             setLoading(true);
             setErr(null);
             const res = await getGifticons();
-            setList(Array.isArray(res) ? res : []);
+            // (선택) 아주 좁은 보정: 서버가 brand를 주지 않는 경우 표시만 보정
+            const normalized = (Array.isArray(res) ? res : []).map((it) => {
+                if (!it.brand && (it.name ?? "").trim() === FORCED_PRODUCT) {
+                    return { ...it, brand: FORCED_BRAND };
+                }
+                return it;
+            });
+            setList(normalized);
         } catch {
             setErr("기프티콘을 불러오지 못했습니다.");
         } finally {
@@ -138,7 +173,10 @@ export default function GifticonSection() {
 
     // 필터링 목록
     const filtered = useMemo(
-        () => (Array.isArray(list) ? list.filter((g) => ((g.status ?? "ACTIVE") as Filter) === filter) : []),
+        () =>
+            Array.isArray(list)
+                ? list.filter((g) => ((g.status ?? "ACTIVE") as Filter) === filter)
+                : [],
         [list, filter]
     );
 
@@ -172,8 +210,8 @@ export default function GifticonSection() {
             setForm((f) => ({
                 ...f,
                 productId: DEFAULT_PRODUCT_ID,
-                brand: FORCED_BRAND,            // 고정
-                name: FORCED_PRODUCT,           // 고정
+                brand: FORCED_BRAND, // 고정
+                name: FORCED_PRODUCT, // 고정
                 barcode: r.barcode ?? "",
                 expiresAt: r.expiresAt ?? "",
                 amount: r.faceValue ?? null,
@@ -194,7 +232,7 @@ export default function GifticonSection() {
         }
     };
 
-// 등록
+    // 등록
     const handleConfirmRegister = async () => {
         setScanError(null);
 
@@ -218,7 +256,7 @@ export default function GifticonSection() {
             let created: Gifticon;
 
             if (selectedFile) {
-                // ✅ 파일이 있으면 항상 multipart로! (바코드/만료일/금액도 함께 전달)
+                // 파일 있으면 multipart
                 created = await createGifticonByImage({
                     file: selectedFile,
                     productId: pid,
@@ -227,30 +265,32 @@ export default function GifticonSection() {
                     expiresAt: form.expiresAt || undefined,
                 });
             } else {
-                // ✅ 파일이 없을 때만 JSON 경로 사용
-                const payload: GifticonCreateReq = {
-                    productId: pid,
-                    barcode, // JSON 경로는 barcode 필수일 가능성 큼
-                };
+                // 파일 없으면 JSON
+                const payload: GifticonCreateReq = { productId: pid, barcode };
                 if (form.amount != null) payload.balance = form.amount;
                 if (form.expiresAt) payload.expiresAt = form.expiresAt;
-
                 created = await createGifticon(payload);
             }
 
-            // 방금 생성한 **한 건만** 강제 표기명으로 보이도록
+            // 방금 생성한 한 건만 강제 표기명으로 보이도록(표시 일관성)
             const createdForced: Gifticon = {
                 ...created,
-                name: `${FORCED_BRAND} ${FORCED_PRODUCT}`,
+                name: FORCED_PRODUCT,
+                brand: FORCED_BRAND,
             };
 
             setList((prev) => [createdForced, ...prev]);
             setSelected(createdForced);
             closeScanModal();
         } catch (e) {
+            // 개발 중 원인 파악에 도움
+            // eslint-disable-next-line no-console
             console.error("create gifticon error:", e);
 
-            const httpErr = e as { response?: { status?: number; data?: { message?: string; error?: string } }; message?: string };
+            const httpErr = e as {
+                response?: { status?: number; data?: { message?: string; error?: string } };
+                message?: string;
+            };
             const serverMsg =
                 httpErr.response?.data?.message ||
                 httpErr.response?.data?.error ||
@@ -272,7 +312,7 @@ export default function GifticonSection() {
                         className={styles.previewThumb}
                         style={{
                             background: selected
-                                ? `url(${getGiftImage(selected?.name ?? "") ?? ""}) center/cover no-repeat`
+                                ? `url(${getGiftImage(previewFull) ?? ""}) center/cover no-repeat`
                                 : "var(--theme-bg)",
                         }}
                     />
@@ -335,14 +375,16 @@ export default function GifticonSection() {
                 {!loading && !err && filtered.length > 0 && (
                     <ul className={styles.gifticonList}>
                         {filtered.map((g) => {
-                            // 각 아이템은 **자기 자신의 name**을 사용
-                            const nameForCard = g.name ?? "";
-                            const thumb = getGiftImage(nameForCard);
-                            const { brand, product } = splitName(nameForCard);
+                            // 각 아이템은 **자기 자신의 brand/name**으로 표시
+                            const { brand, product, fullForImage } = deriveDisplay({
+                                name: g.name,
+                                brand: (g.brand as string | undefined) ?? null,
+                            });
+                            const thumb = getGiftImage(fullForImage);
 
                             const safeKey =
                                 g.gifticonId ??
-                                `${g.code ?? "no-code"}__${nameForCard || "no-name"}__${g.expireDate ?? "no-exp"}`;
+                                `${g.code ?? "no-code"}__${g.name ?? "no-name"}__${g.expireDate ?? "no-exp"}`;
 
                             return (
                                 <li
@@ -355,7 +397,7 @@ export default function GifticonSection() {
                                         style={{
                                             background: thumb ? `url(${thumb}) center/cover no-repeat` : "var(--theme-bg)",
                                         }}
-                                        title={nameForCard}
+                                        title={fullForImage}
                                     />
                                     <div className={styles.itemText}>
                                         <div className={styles.brand} title={brand}>
