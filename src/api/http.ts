@@ -1,83 +1,72 @@
-import axios from "axios";
-import type { AxiosResponse, AxiosError } from "axios";
+import axios, { AxiosError, AxiosHeaders } from "axios";
+import type { AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from "axios";
 
-/** 공용 axios 인스턴스 */
-const http = axios.create({
-    baseURL: "/api",
-    withCredentials: false,
-    timeout: 10000,
+const api = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL as string,
+    withCredentials: true,
 });
 
-/** 요청 인터셉터: 토큰 자동 주입 */
-http.interceptors.request.use((config) => {
+// 이미 재시도한 요청을 저장
+const retried = new WeakSet<AxiosRequestConfig>();
+
+api.interceptors.request.use((config) => {
     const token = localStorage.getItem("accessToken");
     if (token) {
-        config.headers = config.headers ?? {};
-        config.headers.Authorization = `Bearer ${token}`;
+        if (!config.headers) config.headers = new AxiosHeaders();
+        if (config.headers instanceof AxiosHeaders) {
+            config.headers.set("Authorization", `Bearer ${token}`);
+        } else {
+            (config.headers as RawAxiosRequestHeaders)["Authorization"] = `Bearer ${token}`;
+        }
+
     }
     return config;
 });
 
-/** ApiResponse 형태 가드 */
-type ApiEnvelope = {
-    success: boolean;
-    data?: unknown;
-    message?: string;
-    code?: string;
-};
 
-function isApiEnvelope(x: unknown): x is ApiEnvelope {
-    if (x === null || typeof x !== "object") return false;
-    // 객체 키 존재 여부만 검사( any 사용 금지 )
-    return Object.prototype.hasOwnProperty.call(x as Record<string, unknown>, "success");
-}
+api.interceptors.response.use(
+    (res) => res,
+    async (error: AxiosError) => {
+        const status = error.response?.status ?? 0;
+        const originalRequest = error.config as AxiosRequestConfig | undefined;
 
-/** 에러 객체 표준화 */
-class ApiError extends Error {
-    code?: string;
-    status?: number;
-    constructor(message: string, opts?: { code?: string; status?: number }) {
-        super(message);
-        this.name = "ApiError";
-        this.code = opts?.code;
-        this.status = opts?.status;
-    }
-}
-
-/** 응답 인터셉터: ApiResponse면 data로 언랩 */
-http.interceptors.response.use(
-    (res: AxiosResponse) => {
-        const body: unknown = res.data;
-        if (isApiEnvelope(body)) {
-            if (body.success) {
-                // 성공 → data만 반환하도록 치환
-                return { ...res, data: body.data } as AxiosResponse;
-            }
-            // 실패 → 표준화된 에러로 throw
-            throw new ApiError(body.message ?? "요청에 실패했습니다.", {
-                code: body.code,
-                status: res.status,
-            });
+        if (status !== 401 || !originalRequest || retried.has(originalRequest)) {
+            return Promise.reject(error);
         }
-        // 원시 데이터면 그대로
-        return res;
-    },
-    (error: AxiosError) => {
-        const status = error.response?.status;
-        const payload: unknown = error.response?.data;
+        retried.add(originalRequest);
 
-        // 서버가 ApiResponse 형태로 에러를 보낸 경우
-        if (isApiEnvelope(payload) && payload.success === false) {
-            return Promise.reject(
-                new ApiError(payload.message ?? "요청에 실패했습니다.", {
-                    code: payload.code,
-                    status,
-                })
+        try {
+            const refreshToken = localStorage.getItem("refreshToken");
+            if (!refreshToken) throw new Error("리프레시 토큰 없음");
+
+            const resp: AxiosResponse<{ accessToken: string }> = await axios.post(
+                `${import.meta.env.VITE_API_BASE_URL}/auth/token/refresh`,
+                { refreshToken },
+                { withCredentials: true }
             );
+
+            const newAccess = resp.data.accessToken;
+            if (!newAccess) throw new Error("갱신 토큰 응답 형식 오류");
+
+            localStorage.setItem("accessToken", newAccess);
+
+            if (!originalRequest.headers) originalRequest.headers = new AxiosHeaders();
+            if (originalRequest.headers instanceof AxiosHeaders) {
+                originalRequest.headers.set("Authorization", `Bearer ${newAccess}`);
+            } else {
+                (originalRequest.headers as RawAxiosRequestHeaders)["Authorization"] = `Bearer ${newAccess}`;
+            }
+
+            return api(originalRequest);
+        } catch (e) {
+            console.error("토큰 갱신 실패:", e);
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            window.location.href = "/auth/login";
+            return Promise.reject(e);
         }
-        // 그 외 axios 에러는 원본 유지
-        return Promise.reject(error);
     }
 );
 
-export default http;
+export default api;
+
