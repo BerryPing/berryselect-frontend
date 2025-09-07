@@ -28,6 +28,15 @@
     display: none;
 }
 
+.cardSlotInner {
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    width: 315px;
+    height: 200px;
+    display: block;
+}
+
 /* 각 카드를 감싸는 래퍼 */
 .cardSlot {
     flex: 0 0 auto;

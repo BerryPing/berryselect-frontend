@@ -6,7 +6,7 @@ import { getCards, type CardSummary } from "@/api/walletApi";
 import styles from "./WalletPage.module.css";
 import Button from "@/components/common/Button.tsx";
 import {getCardImage, getCardMeta} from "@/components/wallet/CardCatalog.ts";
-import {openDeepLink} from "@/utils/deeplink.ts";
+import {openDeepLink} from "@/utils/deepLink.ts";
 
 /** Card */
 export default function CardSection() {
@@ -152,15 +152,17 @@ export default function CardSection() {
                                 data-card-slot="1"
                                 className={styles.cardSlot}
                             >
-                                <CardItem
-                                    cardId={c.cardId}
-                                    name={cardDisplayName(c)}
-                                    imageUrl={getCardImage(c.name)}
-                                    onClick={handleSelectCard}
-                                    onOpenApp={() =>
-                                        openDeepLink(getCardMeta(c.name)?.deepLink)
-                                    }
-                                />
+                                <div className={styles.cardSlotInner}>
+                                    <CardItem
+                                        cardId={c.cardId}
+                                        name={cardDisplayName(c)}
+                                        imageUrl={getCardImage(c.name)}
+                                        onClick={handleSelectCard}
+                                        onOpenApp={() =>
+                                            openDeepLink(getCardMeta(c.name)?.deepLink)
+                                        }
+                                    />
+                                </div>
                             </div>
                         ))}
                     </div>
