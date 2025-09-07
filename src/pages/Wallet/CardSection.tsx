@@ -1,18 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import {useEffect, useRef, useState} from "react";
 import SectionBox from "@/components/common/SectionBox";
 import CardItem from "@/components/wallet/CardItem";
-import Modal from "@/components/common/Modal";
 import berrylogo from "@/assets/imgs/berrylogo.png";
-
-import {
-    getCards,
-    getCardBenefits,
-    type CardSummary,
-    type CardBenefit,
-} from "@/api/walletApi";
-import { getCardColor } from "@/components/wallet/cardColors";
+import { getCards, type CardSummary } from "@/api/walletApi";
 import styles from "./WalletPage.module.css";
 import Button from "@/components/common/Button.tsx";
+import {getCardImage, getCardMeta} from "@/components/wallet/CardCatalog.ts";
+import {openDeepLink} from "@/utils/deeplink.ts";
 
 /** Card */
 export default function CardSection() {
@@ -21,19 +15,16 @@ export default function CardSection() {
     const [loadingCards, setLoadingCards] = useState(false);
     const [cardsError, setCardsError] = useState<string | null>(null);
 
-    // 모달 & 선택 카드
-    const [open, setOpen] = useState(false);
-    const [selectedCardId, setSelectedCardId] = useState<number | undefined>();
+    // 활성화된 카드
+    const [activeIndex, setActiveIndex] = useState(0);
+    const listRef = useRef<HTMLDivElement>(null);
 
-    // 혜택
-    const [benefits, setBenefits] = useState<CardBenefit[]>([]);
-    const [loadingBenefits, setLoadingBenefits] = useState(false);
-    const [benefitError, setBenefitError] = useState<string | null>(null);
+    // TODO: 추후 API 연결에 사용
+    // const activeCard = cards[activeIndex];
 
     // 최초 카드 목록 로드
     useEffect(() => {
         let mounted = true;
-
         (async () => {
             try {
                 setLoadingCards(true);
@@ -46,7 +37,6 @@ export default function CardSection() {
                 if (mounted) setLoadingCards(false);
             }
         })();
-
         return () => {
             mounted = false;
         };
@@ -60,35 +50,84 @@ export default function CardSection() {
         return `${issuer}${last4}`;
     };
 
-    // 카드 클릭 → 혜택 로드 & 모달 오픈
-    const handleClickCard = async (cardId?: number) => {
-        setSelectedCardId(cardId);
-        setOpen(true);
+    // 스크롤 감지 → 중앙 카드 찾기
+    useEffect(() => {
+        const el = listRef.current;
+        if (!el) return;
 
+        let raf = 0;
+        const onScroll = () => {
+            if (raf) cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => {
+                const container = listRef.current!;
+                const children = Array.from(
+                    container.querySelectorAll<HTMLDivElement>('[data-card-slot="1"]')
+                );
+
+                if (!children.length) return;
+                const containerCenter =
+                    container.scrollLeft + container.clientWidth / 2;
+
+                let bestIdx = 0;
+                let bestDist = Number.POSITIVE_INFINITY;
+
+                const containerRect = container.getBoundingClientRect();
+                children.forEach((child, idx) => {
+                    const rect = child.getBoundingClientRect();
+                    const childCenter =
+                        container.scrollLeft +
+                        (rect.left - containerRect.left) +
+                        rect.width / 2;
+                    const dist = Math.abs(childCenter - containerCenter);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestIdx = idx;
+                    }
+                });
+
+                if (bestIdx !== activeIndex) setActiveIndex(bestIdx);
+            });
+        };
+
+        el.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            el.removeEventListener("scroll", onScroll);
+            if (raf) cancelAnimationFrame(raf);
+        };
+    }, [activeIndex]);
+
+    // 카드 클릭 시 스크롤 이동
+    const handleSelectCard = (cardId?: number) => {
         if (!cardId) return;
-        try {
-            setLoadingBenefits(true);
-            setBenefitError(null);
-            const list = await getCardBenefits(cardId);
-            setBenefits(list);
-        } catch {
-            setBenefits([]);
-            setBenefitError("혜택 정보를 불러오지 못했습니다.");
-        } finally {
-            setLoadingBenefits(false);
+        const idx = cards.findIndex((c) => c.cardId === cardId);
+        if (idx >= 0) {
+            const container = listRef.current;
+            if (!container) return;
+            const slots = container.querySelectorAll<HTMLDivElement>(
+                '[data-card-slot="1"]'
+            );
+            const target = slots[idx];
+            if (!target) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const targetRect = target.getBoundingClientRect();
+            const containerCenter =
+                container.scrollLeft + container.clientWidth / 2;
+            const targetCenter =
+                container.scrollLeft +
+                (targetRect.left - containerRect.left) +
+                targetRect.width / 2;
+
+            container.scrollTo({
+                left: container.scrollLeft + (targetCenter - containerCenter),
+                behavior: "smooth",
+            });
         }
     };
 
-    // 선택된 카드 이름 (모달 헤더용)
-    const selectedCardName = useMemo(() => {
-        if (!selectedCardId) return "";
-        const found = cards.find((c) => c.cardId === selectedCardId);
-        return found ? cardDisplayName(found) : "";
-    }, [selectedCardId, cards]);
-
     return (
         <>
-            <SectionBox width={352} padding="0px 16px 23px" outlined shadow={false}>
+            <SectionBox width={352} padding="0px 16px 23px" outlined shadow={false} >
                 <div className={styles.sectionTitleCompact}>보유 카드</div>
 
                 {loadingCards && <div className={styles.loading}>불러오는 중…</div>}
@@ -102,14 +141,25 @@ export default function CardSection() {
                 )}
 
                 {!loadingCards && !cardsError && cards.length > 0 && (
-                    <div aria-label="보유 카드 목록" className={styles.hList}>
+                    <div
+                        ref={listRef}
+                        aria-label="보유 카드 목록"
+                        className={styles.hList}
+                    >
                         {cards.map((c) => (
-                            <div key={c.cardId} className={styles.cardSlot}>
+                            <div
+                                key={c.cardId}
+                                data-card-slot="1"
+                                className={styles.cardSlot}
+                            >
                                 <CardItem
                                     cardId={c.cardId}
                                     name={cardDisplayName(c)}
-                                    color={getCardColor(c.name)}
-                                    onClick={handleClickCard}
+                                    imageUrl={getCardImage(c.name)}
+                                    onClick={handleSelectCard}
+                                    onOpenApp={() =>
+                                        openDeepLink(getCardMeta(c.name)?.deepLink)
+                                    }
                                 />
                             </div>
                         ))}
@@ -117,45 +167,24 @@ export default function CardSection() {
                 )}
             </SectionBox>
 
-            {/* 카드 섹션 전용 CTA 버튼 */}
+            {/* 베리픽 버튼: 모달 제거, 추후 API 연결만 */}
             <div className={styles.actionBtnWrap}>
-                <Button className={styles.sectionLikeBtn} onClick={() => setOpen(true)}>
-                      <span className={styles.btnInner}>
-                        <img
-                            src={berrylogo}
-                            alt="베리로고"
-                            className={styles.berryselectLogo}
-                        />
-                        <span className={styles.btnText}>베리픽 결제 추천 받기</span>
-                      </span>
+                <Button
+                    className={styles.sectionLikeBtn}
+                    onClick={() => {
+                        // TODO: 베리픽 API 연동
+                    }}
+                >
+          <span className={styles.btnInner}>
+            <img
+                src={berrylogo}
+                alt="베리로고"
+                className={styles.berryselectLogo}
+            />
+            <span className={styles.btnText}>베리픽 결제 추천 받기</span>
+          </span>
                 </Button>
             </div>
-
-            {/* 혜택 모달 */}
-            <Modal open={open} onClose={() => setOpen(false)}>
-                <div className={styles.modalHeader}>
-                    {selectedCardName ? `${selectedCardName} 혜택` : "카드 혜택"}
-                </div>
-                <div className={styles.modalBody}>
-                    {!selectedCardId ? (
-                        <div>카드를 선택해 주세요.</div>
-                    ) : loadingBenefits ? (
-                        <div>혜택 불러오는 중…</div>
-                    ) : benefitError ? (
-                        <div className={styles.error}>{benefitError}</div>
-                    ) : benefits.length === 0 ? (
-                        <div className={styles.empty}>혜택 정보가 없습니다.</div>
-                    ) : (
-                        <ul style={{ paddingLeft: 18, margin: 0 }}>
-                            {benefits.map((b) => (
-                                <li key={b.id} style={{ marginBottom: 6 }}>
-                                    {b.description}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-            </Modal>
         </>
     );
 }

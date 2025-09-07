@@ -16,11 +16,13 @@
 /* 가로 카드 리스트 */
 .hList {
     display: flex;
-    gap: 16px;
     overflow-x: auto;
-    padding: 0px 2px;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+    padding: 0;
+    align-items: center;
+    background: transparent;
+    gap: 16px;
 }
 .hList::-webkit-scrollbar {
     display: none;
@@ -29,7 +31,12 @@
 /* 각 카드를 감싸는 래퍼 */
 .cardSlot {
     flex: 0 0 auto;
-    scroll-snap-align: start;
+    scroll-snap-align: center;
+    margin: 0 8px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    background: transparent;
 }
 
 /* 상태 텍스트 */
@@ -85,7 +92,9 @@
     gap: 10px;
 }
 
- .btnInner { transform: translate(calc(-50% - 18px), -50%); }
+.btnInner {
+    transform: translate(calc(-50% - 18px), -50%);
+}
 
 .berryselectLogo {
     width: 50px;
