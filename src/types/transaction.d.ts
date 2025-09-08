@@ -1,6 +1,23 @@
 // src/types/transaction.d.ts
 
 /**
+ * 백엔드 거래 응답 타입 (실제 API 응답)
+ */
+export interface BackendTransactionResponse {
+    txId: number;
+    merchantName: string;
+    categoryName: string;
+    paymentCardName: string;
+    paidAmount: number;
+    txTime: string;
+    appliedBenefits: any[];
+    totalSavedAmount: number;
+    isFromRecommendation: boolean;
+    paymentMethod: string | null;
+}
+
+
+/**
  * 거래 상세 응답 타입 (백엔드 TransactionDetailResponse 대응)
  */
 export interface TransactionDetailResponse {
