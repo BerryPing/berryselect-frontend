@@ -3,12 +3,13 @@
 /**
  * 카테고리별 지출 데이터 타입 (도넛차트용)
  */
-export interface CategorySpendingData {
+export interface BackendCategorySpendingData {
     categoryId: number;
     categoryName: string;
-    totalAmount: number;
-    percentage: number;         // 전체 대비 비율 (0.0 ~ 100.0)
-    color: string;              // 차트 색상
+    amountSpent: number;
+    transactionCount: number;
+    spendingRatio: number;
+    categorySavingRate: number;
 }
 
 /**
@@ -75,18 +76,6 @@ export interface ReportPageData {
         savedAmount: StatCardData;
         usageRate: StatCardData;
     };
-}
-
-/**
- * 백엔드 월별 리포트 응답 타입 (BudgetReportController의 MonthlyReportDetailResponse)
- */
-export interface BackendMonthlyReportResponse {
-    yearMonth: string;
-    totalSpent: number;
-    totalSaved: number;
-    recommendationUsageRate: number;
-    categorySpending: CategorySpendingData[];
-    recentTrans
 }
 
 /**
@@ -101,18 +90,6 @@ export interface CategorySpendingData {
 }
 
 /**
- * 월별 리포트 데이터 타입
- */
-export interface MonthlyReportData {
-    yearMonth: string;          // YYYY-MM 형식
-    totalSpending: number;      // 총 지출 금액
-    totalSaved: number;         // 총 절약 금액
-    recommendationUsageRate: number; // 추천 사용률 (0.0 ~ 1.0)
-    categorySpending: CategorySpendingData[]; // 카테고리별 지출
-    recentTransactions: RecentTransaction[]; // 최근 거래
-}
-
-/**
  * 최근 거래 데이터 타입 (요약된 형태)
  */
 export interface RecentTransaction {
@@ -173,8 +150,17 @@ export interface BackendMonthlyReportResponse {
     yearMonth: string;
     totalSpent: number;
     totalSaved: number;
-    recommendationUsageRate: number;
-    categorySpending: CategorySpendingData[];
-    recentTransactions: RecentTransaction[];
-    aiSummary?: string;         // AI 분석 요약 (선택사항)
+    totalTransactionCount: number;
+    categorySpending: BackendCategorySpendingData[];
+    recommendationUsage: {
+        totalTransactions: number;
+        recommendationUsedTransactions: number;
+        usageRate: number;
+        totalSavedFromRecommendation: number;
+        averageSavingPerRecommendation: number;
+    };
+    aiSummary: string;
+    savingRate: number;
+    spentChangeFromLastMonth: number;
+    savedChangeFromLastMonth: number;
 }

@@ -1,5 +1,5 @@
 // src/pages/ReportPage/ReportPage.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header.tsx";
 import StatCard from "@/components/report/StatCard.tsx";
 import MonthNavigator from "@/components/report/MonthNavigator.tsx";
@@ -7,7 +7,7 @@ import DonutChart from "@/components/report/DonutSection/DonutChart.tsx";
 import AiSummaryCard from "@/components/report/AiSummaryCard.tsx";
 import RecentTransactionCard from "@/components/report/Transaction/RecentTransactionCard.tsx";
 import {getReportPageData, formatYearMonth} from "@/api/reportApi.ts";
-import {ReportPageData} from "@/types/report";
+import type {ReportPageData} from "@/types/report";
 
 const ReportPage = () => {
     const [reportData, setReportData] = useState<ReportPageData | null>(null);
@@ -21,7 +21,7 @@ const ReportPage = () => {
         setError(null);
 
         try {
-            const yearMonth = `${year}-${month.toString().padStart(2, '0')}`;
+            const yearMonth = formatYearMonth(new Date(year, month - 1, 1));
             console.log(`리포트 데이터 조회: ${yearMonth}`);
 
             // http.ts의 axios interceptor가 JWT 토큰과 갱신을 자동 처리
@@ -29,16 +29,21 @@ const ReportPage = () => {
             setReportData(data);
             setSelectedDate(new Date(year, month - 1, 1));
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('리포트 데이터 로딩 실패:', error);
 
             // axios 에러 처리
-            if (error.response?.status === 401) {
-                // http.ts에서 이미 토큰 갱신을 시도했지만 실패한 경우
-                // 자동으로 로그인 페이지로 리다이렉트됨
-                setError('인증이 만료되었습니다. 로그인 페이지로 이동합니다.');
-            } else if (error.response?.status >= 500) {
-                setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as { response?: { status?: number } };
+                if (axiosError.response?.status === 401) {
+                    // http.ts에서 이미 토큰 갱신을 시도했지만 실패한 경우
+                    // 자동으로 로그인 페이지로 리다이렉트됨
+                    setError('인증이 만료되었습니다. 로그인 페이지로 이동합니다.');
+                } else if (axiosError.response?.status && axiosError.response.status >= 500) {
+                    setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                } else {
+                    setError('데이터를 불러오는 중 오류가 발생했습니다.');
+                }
             } else {
                 setError('데이터를 불러오는 중 오류가 발생했습니다.');
             }
@@ -50,11 +55,6 @@ const ReportPage = () => {
     // 월 변경 핸들러
     const handleMonthChange = (year: number, month: number) => {
         fetchReportData(year, month);
-    };
-
-    // 현재 선택된 월 텍스트 생성
-    const getSelectedMonthText = () => {
-        return `${selectedDate.getMonth() + 1}월`;
     };
 
     // 재시도 핸들러
@@ -69,6 +69,25 @@ const ReportPage = () => {
         const currentDate = new Date();
         fetchReportData(currentDate.getFullYear(), currentDate.getMonth() + 1);
     }, []);
+
+    // reportData에서 필요한 데이터 추출
+    const selectedMonth = `${selectedDate.getMonth() + 1}월`; // MonthNavigator가 기대하는 string 형태로 변환
+
+    // CategorySpendingData를 DonutChart용 CategoryData로 변환
+    const categoryData = (reportData?.monthlyReport?.categorySpending || []).map(item => ({
+        name: item.categoryName,
+        value: item.totalAmount,
+        color: item.color
+    }));
+
+    const totalAmount = reportData?.monthlyReport?.totalSpending || 0;
+    const aiSummary = reportData?.aiAnalysis?.summary || '';
+    const isAnalyzing = false; // AI 분석은 이미 완료된 상태로 가정
+    const recentTransactions = reportData?.monthlyReport?.recentTransactions || [];
+
+    // StatCard용 데이터
+    const savedAmountValue = reportData?.stats?.savedAmount?.value || '0원';
+    const usageRateValue = reportData?.stats?.usageRate?.value || '0%';
 
     // 로딩 상태
     if (loading) {
@@ -168,8 +187,8 @@ const ReportPage = () => {
                 gap: 16,
                 padding: "20px 20px 20px 20px"
             }}>
-                <StatCard title="절감금액" value="24,300원" />
-                <StatCard title="추천 사용률" value="68%" />
+                <StatCard title="절감금액" value={savedAmountValue} />
+                <StatCard title="추천 사용률" value={usageRateValue} />
             </div>
 
             {/* 월 선택 영역 */}

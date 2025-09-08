@@ -86,15 +86,21 @@ export const getMonthlyReportData = async (
         try {
             const backendReport = await getMonthlyReportFromBackend(yearMonth);
 
-            // 백엔드 응답을 프론트엔드 타입에 맞게 변환
             const result: MonthlyReportData = {
                 yearMonth,
                 totalSpending: backendReport.totalSpent || 0,
                 totalSaved: backendReport.totalSaved || 0,
-                recommendationUsageRate: (backendReport.recommendationUsageRate || 0) / 100, // 백엔드가 %로 주면 소수로 변환
-                categorySpending: backendReport.categorySpending || [],
-                recentTransactions: backendReport.recentTransactions || []
+                recommendationUsageRate: (backendReport.recommendationUsage?.usageRate || 0) / 100,
+                categorySpending: (backendReport.categorySpending || []).map(category => ({
+                    categoryId: category.categoryId,
+                    categoryName: category.categoryName,
+                    totalAmount: category.amountSpent,
+                    percentage: category.spendingRatio,
+                    color: CATEGORY_COLORS[category.categoryName] || '#666666'
+                })),
+                recentTransactions: [] // 백엔드에서 제공하지 않으므로 빈 배열
             };
+
             return result;
         } catch (backendError) {
             console.warn('백엔드 리포트 API 실패, 개별 API 호출로 대체:', backendError);
@@ -168,7 +174,6 @@ export const requestAiAnalysis = async (
     }
 ): Promise<AiAnalysisResponse> => {
     try {
-        // 방법 1: 백엔드의 AI 재생성 API 사용 (추천)
         try {
             const aiSummary = await regenerateAiAnalysis(analysisRequest.yearMonth);
             const result: AiAnalysisResponse = {
@@ -180,7 +185,6 @@ export const requestAiAnalysis = async (
         } catch (backendError) {
             console.warn('백엔드 AI API 실패, 폴백 분석 사용:', backendError);
 
-            // 방법 2: 폴백 분석 (개발용)
             const fallbackAnalysis = generateFallbackAnalysis(analysisRequest);
             return fallbackAnalysis;
         }

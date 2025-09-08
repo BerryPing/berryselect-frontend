@@ -13,7 +13,7 @@ export const getUserTransactions = async (
     params: Omit<TransactionListParams, 'userId'> // userId 제거
 ): Promise<PageResponse<TransactionDetailResponse>> => {
     try {
-        const response = await api.get('/myberry/transactions', {
+        const response = await api.get('/transactions/list', {
             params: {
                 ...(params.yearMonth && { yearMonth: params.yearMonth }),
                 ...(params.categoryId && { categoryId: params.categoryId }),
@@ -36,7 +36,7 @@ export const getRecommendationUsageRate = async (
     yearMonth: string
 ): Promise<number> => {
     try {
-        const response = await api.get('/myberry/transactions/recommendation-rate', {
+        const response = await api.get('/transactions/recommendation-rate', {
             params: { yearMonth }
         });
 
@@ -53,7 +53,7 @@ export const getTotalSavedAmount = async (
     yearMonth: string
 ): Promise<number> => {
     try {
-        const response = await api.get('/myberry/transactions/total-saved', {
+        const response = await api.get('/transactions/total-saved', {
             params: { yearMonth }
         });
 
