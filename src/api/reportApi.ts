@@ -84,7 +84,10 @@ export const getMonthlyReportData = async (
     try {
         // 방법 1: 백엔드의 새로운 리포트 API 사용 (추천)
         try {
-            const backendReport = await getMonthlyReportFromBackend(yearMonth);
+            const [backendReport, recentTransactions] = await Promise.all([
+                getMonthlyReportFromBackend(yearMonth),
+                getRecentTransactions(yearMonth, 5)
+            ]);
 
             const result: MonthlyReportData = {
                 yearMonth,
@@ -98,7 +101,15 @@ export const getMonthlyReportData = async (
                     percentage: category.spendingRatio,
                     color: CATEGORY_COLORS[category.categoryName] || '#666666'
                 })),
-                recentTransactions: [] // 백엔드에서 제공하지 않으므로 빈 배열
+                recentTransactions: recentTransactions.map(tx => ({
+                    id: tx.id,
+                    storeName: tx.storeName,
+                    amount: tx.amount,
+                    cardCompany: tx.cardCompany,
+                    category: tx.category,
+                    reward: tx.reward,
+                    txTime: tx.txTime
+                }))
             };
 
             return result;
