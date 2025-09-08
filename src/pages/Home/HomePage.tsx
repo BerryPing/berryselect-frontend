@@ -1,12 +1,21 @@
 // src/pages/Home/HomePage.tsx
-import Header from '@/components/layout/Header';
+import { useState } from 'react';
+import HomeSearchBar from "@/components/home/HomeSearchBar.tsx";
 
-// React.FC 생략 가능 (많은 팀이 이렇게 씀)
 const HomePage = () => {
+    const [searchValue, setSearchValue] = useState('');
+
     return (
         <>
-            <Header title="홈" showBackButton={false} showHomeButton={false} />
-            <div>홈 화면 콘텐츠</div>
+            <HomeSearchBar
+                searchPlaceholder="위치/가맹점 검색"
+                searchValue={searchValue}
+                onSearchChange={setSearchValue}
+            />
+            {/* 헤더 높이만큼 여백 */}
+            <div style={{ marginTop: '133px' }}>
+                홈페이지 콘텐츠
+            </div>
         </>
     );
 };
