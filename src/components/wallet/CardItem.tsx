@@ -1,76 +1,109 @@
 export interface CardItemProps {
-    cardId?: number;        // 카드 ID
-    name: string;           // 카드 이름
-    benefit?: string;       // 혜택 요약
-    limit?: string;         // 한도 표시
-    color?: string;         // 카드 배경 색상
-    onClick?: (cardId?: number) => void; // 카드 클릭 시 동작
+    cardId?: number;
+    name: string;
+    imageUrl?: string;
+    onClick?: (cardId?: number) => void | Promise<void>;
+    onOpenApp?: (cardId?: number) => void;
 }
 
-export default function CardItem({
-                                     cardId,
-                                     name,
-                                     benefit,
-                                     limit,
-                                     color = "var(--theme-primary)",  // 기본값 보라색
-                                     onClick,
-                                 }: CardItemProps) {
+function splitName(name: string) {
+    const m = name.match(/^(.*?)(\s*\([^)]*\))\s*$/);
+    if (m) {
+        return { main: m[1].trim(), sub: m[2].trim() };
+    }
+    return { main: name, sub: "" };
+}
+
+export default function CardItem({ cardId, name, imageUrl, onClick, onOpenApp }: CardItemProps) {
+    const { main: mainName, sub: subName } = splitName(name);
+
     return (
         <div
             onClick={() => onClick?.(cardId)}
             style={{
-                width: "280px",
-                height: "160px",
-                borderRadius: "16px",
-                background: color,
-                color: "white",
-                padding: "20px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                boxShadow: "0px 8px 20px -12px rgba(0,0,0,0.15)",
+                width: 320,
+                height: 200,
+                position: "relative",
+                background: imageUrl
+                    ? `url(${imageUrl}) center/cover no-repeat`
+                    : "linear-gradient(145deg,var(--theme-text-light) 0%,var(--theme-primary) 100%)",
+                boxShadow: "0px 8px 32px rgba(0, 0, 0, 0.15)",
+                overflow: "hidden",
+                borderRadius: 20,
                 cursor: onClick ? "pointer" : "default",
                 transition: "transform 0.2s ease, box-shadow 0.2s ease",
             }}
         >
-            {/* 상단 영역 */}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <div style={{ fontSize: "16px", fontWeight: 700 }}>{name}</div>
+            {/* 상단 바 */}
+            <div
+                style={{
+                    width: 280,
+                    height: 28,
+                    left: 20,
+                    top: 20,
+                    position: "absolute",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}
+            >
+                {/* 이름: 2줄 렌더 */}
                 <div
                     style={{
-                        background: "rgba(255,255,255,0.2)",
-                        borderRadius: "8px",
-                        padding: "2px 8px",
-                        fontSize: "12px",
-                        fontWeight: 600,
+                        color: "white",
+                        textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+                        fontWeight: 700,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                        maxWidth: 220,
                     }}
+                    title={name}
                 >
-                    결제
+          <span
+              style={{
+                  fontSize: 18,
+                  lineHeight: "20px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+              }}
+          >
+            {mainName}
+          </span>
+                    {subName && (
+                        <span
+                            style={{
+                                fontSize: 14,
+                                lineHeight: "18px",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                opacity: 0.95,
+                            }}
+                        >
+              {subName}
+            </span>
+                    )}
+                </div>
+
+                {/* 결제 배지 */}
+                <div
+                    style={{
+                        width: 40,
+                        height: 24,
+                        background: "rgba(226,232,240,0.2)",
+                        borderRadius: 4,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        boxShadow: "0px 2px 6px rgba(0,0,0,0.25)"
+                    }}
+                    onClick={(e) => { e.stopPropagation(); onOpenApp?.(cardId); }}
+                >
+                    <div style={{ color: "white", fontSize: 11, fontWeight: 700 }}>결제</div>
                 </div>
             </div>
-
-            {/* 혜택 */}
-            {benefit && (
-                <div
-                    style={{
-                        background: "rgba(255,255,255,0.2)",
-                        borderRadius: "8px",
-                        padding: "4px 8px",
-                        fontSize: "13px",
-                        fontWeight: 500,
-                        display: "inline-block",
-                    }}
-                >
-                    {benefit}
-                </div>
-            )}
-
-            {/* 한도 */}
-            {limit && (
-                <div style={{ fontSize: "12px", opacity: 0.9 }}>
-                    한도 <span style={{ fontWeight: 600 }}>{limit}</span>
-                </div>
-            )}
         </div>
     );
 }
