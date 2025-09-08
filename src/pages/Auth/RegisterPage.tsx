@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Auth.module.css";
 
 import Header4Auth from '@/components/layout/Header4Auth';
+import {updateUserSettings} from "@/api/userApi.ts";
 
 type RegisterRequest = {
     categories: string[];
@@ -76,6 +77,7 @@ export default function RegisterPage(){
         setLoading(true);
 
         try{
+            // 1) 온보딩 본등록
             const body : RegisterRequest = {
                 categories : cats,
                 warnOverBudget,
@@ -107,13 +109,28 @@ export default function RegisterPage(){
                 throw new Error("온보딩 완료에 실패했습니다.");
             }
 
-            // 정식 AuthResult 수신 -> 토큰 교체
+            // 2) 정식 AuthResult 수신 -> 토큰 교체
             const data: { accessToken: string; refreshToken?: string | null } =
                 await res.json();
             localStorage.setItem("accessToken", data.accessToken);
             if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
             else localStorage.removeItem("refreshToken");
 
+            // 3) 가입 직후 설정을 표준 엔드포인트(/users/me/settings)로 동기화
+            try {
+                await updateUserSettings({
+                    preferredCategories: cats,
+                    warnOverBudget,
+                    gifticonExpireAlert,
+                    eventAlert,
+                    allowKakaoAlert: agreeKakaoAlert,
+                    marketingOptIn,
+                });
+            } catch (syncErr) {
+                console.warn("settings 동기화 실패(온보딩은 계속 진행):", syncErr);
+            }
+
+            // 4) 홈으로 이동
             nav("/", { replace : true});
         }
         catch (e: unknown) {

@@ -48,6 +48,20 @@ export async function getCards(): Promise<CardSummary[]> {
     return [];
 }
 
+export interface BenefitItem {
+    brand: string;
+    title: string;
+    subtitle?: string;
+}
+export interface BenefitGroup {
+    category: string;
+    items: BenefitItem[];
+}
+export interface CardBenefitsGrouped {
+    personalized: BenefitGroup[];
+    others: BenefitGroup[];
+}
+
 /** GET /wallet/cards/{cardId} */
 export async function getCardDetail(cardId: number | string): Promise<CardDetail> {
     const res = await http.get<CardDetail>(`/wallet/cards/${cardId}`);
@@ -55,20 +69,14 @@ export async function getCardDetail(cardId: number | string): Promise<CardDetail
 }
 
 /** GET /wallet/cards/{cardId}/benefits */
-export interface CardBenefit {
-    id: number;
-    description: string;
-    category?: string;
-    brand?: string;
-    limitAmount?: number;
-    [key: string]: unknown;
-}
-type CardBenefitsEnvelope = CardBenefit[] | { benefits?: CardBenefit[] };
-
-export async function getCardBenefits(cardId: number | string): Promise<CardBenefit[]> {
-    const res = await http.get<CardBenefitsEnvelope>(`/wallet/cards/${cardId}/benefits`);
-    const data = res.data;
-    return Array.isArray(data) ? data : data.benefits ?? [];
+export async function getCardBenefits(
+    cardId: number | string
+): Promise<CardBenefitsGrouped> {
+    const res = await http.get<CardBenefitsGrouped>(`/wallet/cards/${cardId}/benefits`);
+    return {
+        personalized: Array.isArray(res.data?.personalized) ? res.data.personalized : [],
+        others: Array.isArray(res.data?.others) ? res.data.others : [],
+    };
 }
 
 /* =====================

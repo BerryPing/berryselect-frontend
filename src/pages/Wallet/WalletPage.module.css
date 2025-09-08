@@ -1,7 +1,5 @@
 /* =========================================================
    공통(Common)
-   - 페이지 패딩, 상태 텍스트, 공통 섹션 타이틀, 모달 기본 레이아웃,
-     공용 버튼(섹션 추천) 등 화면 전역에서 재사용되는 스타일
    ========================================================= */
 .pageWrap {
     padding: 6px 0 80px;
@@ -62,6 +60,11 @@
     border-color: var(--theme-secondary) !important;
 }
 
+.actionBtnWrap {
+    margin-top: 6px;
+    margin-bottom: 6.5px;
+}
+
 .btnInner {
     position: absolute;
     left: 50%;
@@ -91,7 +94,6 @@
 
 /* =========================================================
    카드(Cards)
-   - 카드 섹션 타이틀, 가로 스크롤 리스트, 각 카드 래퍼/슬롯
    ========================================================= */
 /** ───────── Cards ───────── */
 /* 섹션 안 제목 */
@@ -135,16 +137,216 @@
     background: transparent;
 }
 
+/** ───────── 혜택 ───────── */
+.statusCardWrap {
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    padding: 66px;
+    margin: 0;
+}
+
+.benefitsBox {
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    padding: 0;     /* 필요 시 SectionBox의 padding 값만 사용 */
+    margin: 0;
+}
+
+.sectionTitleCompact {
+    font-weight: 700;
+    color: #3C1053;           /* var(--color-violet-19) */
+    font-size: 15.2px;
+    margin-bottom: 8px;
+}
+
+/* 현황 타이틀 */
+.statusTitle {
+    position: absolute;
+    left: 17.04px;
+    top: 17.04px;
+    width: 318.06px;
+    padding-top: 4px;
+    padding-bottom: 2px;
+    color: #3C1053;
+    font-size: 15.2px;
+    font-weight: 700;
+}
+
+/* 좌우 두 개 카드 컨테이너 */
+.statusRow {
+    position: absolute;
+    left: 17.13px;
+    top: 57.04px;
+    width: 318.2px;
+    height: 84.75px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+/* 좌측: 총 실적 카드 */
+.statusCard {
+    position: relative;
+    flex: 1 1 0;
+    align-self: stretch;
+    background: var(--theme-bg);
+    border-radius: 12px;
+    outline: 1px solid var(--theme-secondary);
+    outline-offset: -1px;
+    padding: 13px;
+}
+
+/* 총 실적 - 라벨/값/게이지 */
+.statusLabel {
+    position: absolute;
+    left: 13.03px;
+    top: 13.17px;
+    padding-top: 3px;
+    color: #9B4DCC;
+    font-size: 12px;
+}
+
+.statusValue {
+    position: absolute;
+    left: 13.1px;
+    top: 36px;
+    padding-top: 0px;
+    padding-bottom: 4px;
+    color: #3C1053;
+    font-size: 14.29px;
+    font-weight: 700;
+}
+
+.statusMeter {
+    position: absolute;
+    left: 13.16px;
+    top: 62px;
+    width: 127.01px;
+    height: 6.3px;
+    background: #E5D5F0;
+    overflow: hidden;
+    border-radius: 3px;
+}
+
+.statusMeterFill {
+    position: absolute;
+    left: 0;
+    top: 0.17px;
+    width: 53.34px;           /* 더미 값(진척도) */
+    height: 6.13px;
+    background: #5F0080;      /* var(--color-violet-25) */
+    border-radius: 3px;
+}
+
+/* 우측: 잔여 예산 카드 */
+.budgetCard {
+    flex: 1 1 0;
+    align-self: stretch;
+    padding: 13px;
+    background: var(--theme-bg);
+    border-radius: 12px;
+    outline: 1px solid var(--theme-secondary);
+    outline-offset: -1px;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 4px;
+}
+.budgetLabel { color: #9B4DCC; font-size: 12px; }
+.budgetValue { color: #3C1053; font-size: 14.4px; font-weight: 700; }
+.budgetMeter {
+    position: relative;
+    width: 100%;
+    height: 6.3px;
+    background: #E5D5F0;
+    overflow: hidden;
+    border-radius: 3px;
+}
+
+.budgetMeterFill {
+    position: absolute;
+    left: 0;
+    top: 0.11px;
+    width: 82.56px;           /* 더미 값(잔여 게이지) */
+    height: 6.2px;
+    background: #059669;      /* var(--color-spring-green-30) */
+    border-radius: 3px;
+}
+
+.groupTitle {
+    color: #5F0080;           /* var(--color-violet-25) */
+    font-size: 14.4px;
+    font-weight: 600;
+    margin: 8px 0;
+}
+
+.groupBlock { margin-bottom: 16px; }
+
+.benefitItem {
+    width: 100%;
+    min-height: 67px;
+    padding: 13px;
+    background: #fff;
+    border-radius: 12px;
+    outline: 1px solid #E5D5F0;
+    outline-offset: -1px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.benefitThumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: #FAF7FB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5F0080;
+    font-size: 12.8px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.benefitTexts { display: flex; flex-direction: column; gap: 2px; }
+.benefitBrand  { color: #3C1053; font-size: 14.4px; font-weight: 700; }
+.benefitTitle  { color: #9B4DCC; font-size: 12px; font-weight: 400; }
+.benefitSubtle { color: rgba(155, 77, 204, 0.8); font-size: 11px; }
+
+/* '그 외 혜택' 카테고리 칩 */
+.chipsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 6px 0 8px;
+}
+.chip {
+    height: 37px;
+    padding: 12px 13px 11px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #E5D5F0;
+    color: #2D0F3F;
+    font-size: 13.6px;
+    cursor: pointer;
+}
+.chipSelected {
+    border-color: #5F0080;
+    color: #2D0F3F;
+}
+
 /* =========================================================
    멤버십(Membership)
-   - (현재 파일에서는 전용 규칙 없음. 필요 시 이 블록 아래에 추가)
    ========================================================= */
 /** ───────── Membership ───────── */
 
 /* =========================================================
    기프티콘(Gifticon)
-   - 필터/업로드 영역, 리스트, 상태 Pill, 스캔 모달, 미리보기 카드,
-     입력 폼, 액션 버튼 레이아웃 등
    ========================================================= */
 /** ───────── Gifticon ───────── */
 
