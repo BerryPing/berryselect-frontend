@@ -42,19 +42,43 @@ export class ApiError extends Error {
     }
 }
 
+type HeaderValue = string | number | boolean | string[] | null | undefined;
+type HeaderBag = AxiosHeaders | RawAxiosRequestHeaders;
+
+function ensureHeaders(cfg: AxiosRequestConfig): HeaderBag {
+    if (!cfg.headers) cfg.headers = new AxiosHeaders();
+    return cfg.headers as HeaderBag;
+}
+
+function setHeader(h: HeaderBag, key: string, value: string): void {
+    if (h instanceof AxiosHeaders) h.set(key, value);
+    else (h as RawAxiosRequestHeaders)[key] = value;
+}
+
+function getHeader(h: HeaderBag, key: string): HeaderValue {
+    const v = h instanceof AxiosHeaders ? h.get(key) : (h as RawAxiosRequestHeaders)[key];
+    return v === null ? undefined : (v as HeaderValue);
+}
+
 /** =========================
  *  요청 인터셉터: Authorization 주입
  *  ========================= */
 api.interceptors.request.use((config) => {
+    const headers = ensureHeaders(config);
     const token = localStorage.getItem("accessToken");
+
     if (token) {
-        if (!config.headers) config.headers = new AxiosHeaders();
-        if (config.headers instanceof AxiosHeaders) {
-            config.headers.set("Authorization", `Bearer ${token}`);
-        } else {
-            (config.headers as RawAxiosRequestHeaders)["Authorization"] = `Bearer ${token}`;
-        }
+        setHeader(headers, "Authorization", `Bearer ${token}`);
     }
+
+    const hasAuth =
+        Boolean(getHeader(headers, "Authorization")) ||
+        Boolean(getHeader(headers, "authorization"));
+
+    if (!hasAuth) {
+        setHeader(headers, "X-User-Id", "1");
+    }
+
     return config;
 });
 

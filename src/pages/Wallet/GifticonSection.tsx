@@ -53,6 +53,87 @@ function deriveDisplay(g: { name?: string | null; brand?: string | null }) {
     return { brand: b2, product: p2, fullForImage };
 }
 
+// 날짜가 이미 지났는지 확인
+function isExpiredByDate(expiresAt?: string | null): boolean {
+    if (!expiresAt) return false;
+    const today = new Date();
+    const exp = new Date(expiresAt);
+
+    // 하루 단위 비교 → 오늘 자정 기준
+    return exp < new Date(today.toDateString());
+}
+
+function getDerivedStatus(g: Partial<Gifticon>): Filter {
+    // 서버 status가 USED면 최우선
+    const base = (g.status as Filter) ?? "ACTIVE";
+    if (base === "USED") return "USED";
+
+    // expiresAt | expireDate 중 하나로 만료 판정
+    const exp = (g.expiresAt as string) ?? (g.expireDate as string);
+    return isExpiredByDate(exp) ? "EXPIRED" : base;
+}
+
+function daysUntil(dateStr?: string | null) {
+    if (!dateStr) return null;
+
+    // 날짜만 온다고 가정하고 로컬 00:00 기준 계산
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr); if (isNaN(target.getTime())) return null;
+    target.setHours(0, 0, 0, 0);
+    const diff = target.getTime() - today.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function StatusPill({
+                        status,
+                        expiresAt,
+                    }: {
+    status: string;
+    expiresAt?: string | null;
+}) {
+    // 만료일 지난 경우 → 무조건 만료
+    if (isExpiredByDate(expiresAt)) {
+        return (
+            <span className={`${styles.statusPill} ${styles.status_expired}`}>
+        만료
+      </span>
+        );
+    }
+
+    // 만료 임박 (0~7일)
+    const d = status === "ACTIVE" ? daysUntil(expiresAt) : null;
+    if (status === "ACTIVE" && d !== null && d >= 0 && d <= 7) {
+        const label = d === 0 ? "만료 오늘" : `만료 ${d}일 전`;
+        return (
+            <span className={`${styles.statusPill} ${styles.status_expiring}`}>
+        {label}
+      </span>
+        );
+    }
+
+    // 기본 상태
+    const map: Record<string, { cls: string; label: string }> = {
+        ACTIVE: { cls: "active", label: "사용 가능" },
+        EXPIRED: { cls: "expired", label: "만료" },
+        USED: { cls: "used", label: "사용 완료" },
+    };
+    const s = map[status] ?? map.ACTIVE;
+    return (
+        <span className={`${styles.statusPill} ${styles[`status_${s.cls}`]}`}>
+      {s.label}
+    </span>
+    );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+    return (
+        <div className={styles.field}>
+            <div className={styles.fieldLabel}>{label}</div>
+            {children}
+        </div>
+    );
+}
+
 export default function GifticonSection() {
     // 목록/상태
     const [list, setList] = useState<Gifticon[]>([]);
@@ -175,7 +256,7 @@ export default function GifticonSection() {
     const filtered = useMemo(
         () =>
             Array.isArray(list)
-                ? list.filter((g) => ((g.status ?? "ACTIVE") as Filter) === filter)
+                ? list.filter((g) => getDerivedStatus(g) === filter)
                 : [],
         [list, filter]
     );
@@ -283,8 +364,6 @@ export default function GifticonSection() {
             setSelected(createdForced);
             closeScanModal();
         } catch (e) {
-            // 개발 중 원인 파악에 도움
-            // eslint-disable-next-line no-console
             console.error("create gifticon error:", e);
 
             const httpErr = e as {
@@ -375,7 +454,6 @@ export default function GifticonSection() {
                 {!loading && !err && filtered.length > 0 && (
                     <ul className={styles.gifticonList}>
                         {filtered.map((g) => {
-                            // 각 아이템은 **자기 자신의 brand/name**으로 표시
                             const { brand, product, fullForImage } = deriveDisplay({
                                 name: g.name,
                                 brand: (g.brand as string | undefined) ?? null,
@@ -407,7 +485,10 @@ export default function GifticonSection() {
                                             {product}
                                         </div>
                                     </div>
-                                    <StatusPill status={(g.status as string) ?? "ACTIVE"} />
+                                    <StatusPill
+                                        status={(g.status as string) ?? "ACTIVE"}
+                                        expiresAt={(g.expiresAt as string) ?? (g.expireDate as string)}
+                                    />
                                 </li>
                             );
                         })}
@@ -509,26 +590,5 @@ export default function GifticonSection() {
                 </div>
             </Modal>
         </>
-    );
-}
-
-/* ───────── Sub Components ───────── */
-
-function StatusPill({ status }: { status: string }) {
-    const map: Record<string, { cls: string; label: string }> = {
-        ACTIVE: { cls: "active", label: "사용 가능" },
-        EXPIRED: { cls: "expired", label: "만료" },
-        USED: { cls: "used", label: "사용 완료" },
-    };
-    const s = map[status] ?? map.ACTIVE;
-    return <span className={`${styles.statusPill} ${styles[`status_${s.cls}`]}`}>{s.label}</span>;
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-    return (
-        <div className={styles.field}>
-            <div className={styles.fieldLabel}>{label}</div>
-            {children}
-        </div>
     );
 }
