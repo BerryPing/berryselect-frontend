@@ -1,0 +1,554 @@
+/* =========================================================
+   공통(Common)
+   - 페이지 패딩, 상태 텍스트, 공통 섹션 타이틀, 모달 기본 레이아웃,
+     공용 버튼(섹션 추천) 등 화면 전역에서 재사용되는 스타일
+   ========================================================= */
+.pageWrap {
+    padding: 6px 0 80px;
+}
+
+.actionBtnWrap {
+    margin-top: 6px;
+}
+
+/** ───────── 공통 섹션 타이틀 ───────── */
+.sectionTitle {
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--theme-text);
+}
+
+/** ───────── 상태 텍스트 ───────── */
+.loading,
+.error,
+.empty {
+    padding: 12px 0;
+}
+
+.loading,
+.empty {
+    color: var(--theme-light-gray);
+}
+
+.error {
+    color: var(--theme-danger);
+}
+
+/* 공통 모달 헤더/바디 */
+.modalHeader {
+    padding: 14px 16px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--theme-secondary);
+}
+
+.modalBody {
+    padding: 16px;
+}
+
+/* "베리픽 결제 추천 받기" 공통 버튼 */
+.sectionLikeBtn {
+    position: relative;
+    background: #fff !important;
+    border: 1px solid var(--theme-secondary) !important;
+    color: var(--theme-text) !important;
+    box-shadow: none !important;
+    width: 100%;
+    border-radius: 12px;
+    padding: 12px 16px;
+}
+
+.sectionLikeBtn:hover {
+    background: var(--theme-bg) !important;
+    border-color: var(--theme-secondary) !important;
+}
+
+.btnInner {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btnInner {
+    transform: translate(calc(-50% - 18px), -50%);
+}
+
+.berryselectLogo {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+}
+
+.btnText {
+    font-weight: 700;
+    font-size: 16px;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* =========================================================
+   카드(Cards)
+   - 카드 섹션 타이틀, 가로 스크롤 리스트, 각 카드 래퍼/슬롯
+   ========================================================= */
+/** ───────── Cards ───────── */
+/* 섹션 안 제목 */
+.sectionTitle {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+/* 가로 카드 리스트 */
+.hList {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0;
+    align-items: center;
+    background: transparent;
+    gap: 16px;
+}
+.hList::-webkit-scrollbar {
+    display: none;
+}
+
+.cardSlotInner {
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    width: 315px;
+    height: 200px;
+    display: block;
+}
+
+/* 각 카드를 감싸는 래퍼 */
+.cardSlot {
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    margin: 0 8px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    background: transparent;
+}
+
+/* =========================================================
+   멤버십(Membership)
+   - (현재 파일에서는 전용 규칙 없음. 필요 시 이 블록 아래에 추가)
+   ========================================================= */
+/** ───────── Membership ───────── */
+
+/* =========================================================
+   기프티콘(Gifticon)
+   - 필터/업로드 영역, 리스트, 상태 Pill, 스캔 모달, 미리보기 카드,
+     입력 폼, 액션 버튼 레이아웃 등
+   ========================================================= */
+/** ───────── Gifticon ───────── */
+
+/** ───────── Gifticon: 필터/업로드 영역 ───────── */
+.filterRow {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.pill {
+    height: 37px;
+    padding: 0 13px;
+    border-radius: 20px;
+    border: 1px solid var(--theme-secondary);
+    background: #fff;
+    color: var(--theme-primary);
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    outline: none;
+    box-shadow: none;
+}
+
+.pill:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: var(--theme-primary);
+}
+
+.pillSelected {
+    border-color: var(--theme-primary);
+    background: #f5f0ff;
+    color: var(--theme-primary);
+}
+
+.uploadBtnWrap {
+    flex-basis: 100%;
+    margin-top: 8px;
+}
+
+.uploadRow {
+    max-width: 352px;   /* 카드 섹션의 SectionBox와 동일한 콘텐츠 폭 */
+    width: 100%;
+    margin: 12px auto 0;   /* 가운데 정렬 */
+    padding: 0 16px;       /* 좌우 가터 */
+    box-sizing: border-box;
+}
+
+.btnFix {
+    transform: none;
+}
+
+.hiddenFile {
+    display: none;
+}
+
+/** ───────── Gifticon 리스트 ───────── */
+.gifticonList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 12px;
+}
+
+.gifticonItem {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 13px;
+    border: 1px solid var(--theme-secondary); /* var(--color-violet-89) */
+    border-radius: 12px;
+    background: #fff;
+}
+
+.thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-secondary);
+    background: var(--theme-bg); /* var(--color-grey-98) */
+    flex-shrink: 0;
+}
+
+.itemText {
+    flex: 1;
+    min-width: 0;
+}
+
+.brand {
+    font-weight: 700;
+    color: var(--theme-text); /* var(--color-violet-19) */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.name {
+    font-size: 12px;
+    color: var(--theme-text-light); /* var(--color-violet-55) */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/** 상태 Pill */
+.statusPill {
+    padding: 7px 8px;
+    border-radius: 12px;
+    font-size: 11.2px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status_active {
+    background: var(--theme-text-light-green); /* #DCFCE7 */
+    color: var(--theme-text-green); /* #0F766E */
+}
+
+.status_expired {
+    background: #FEF2F2;
+    color: #991B1B;
+}
+
+.status_used {
+    background: #F3E8FF;
+    color: var(--theme-primary); /* #5F0080 */
+}
+
+/** ───────── Gifticon: 스캔 모달 ───────── */
+.modalGrip {
+    width: 48px;
+    height: 6px;
+    margin: 8px auto 12px;
+    background: #D1D5DB;
+    border-radius: 9999px;
+}
+
+.modalHeader {
+    padding: 14px 16px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--theme-secondary);
+}
+
+.modalHeaderNoBorder {
+    composes: modalHeader;
+    border-bottom: none;
+}
+
+.modalBody {
+    padding: 16px 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 62vh;
+    overflow: hidden;
+}
+
+/* 스크롤 영역(입력 폼) — 스크롤바 항상 예약해서 폭 변화 방지 */
+.modalScroll {
+    flex: 1 1 auto;
+    min-height: 0;                    /* flex overflow 방지 핵심 */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;         /* IE/Edge */
+    scrollbar-width: none;            /* Firefox 숨김 */
+    scrollbar-gutter: stable both-edges; /* ← 폭 흔들림 방지 */
+}
+.modalScroll::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+.modalScroll, .modalBody { overscroll-behavior: contain; }
+.modalScroll .error {
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 8px 0;
+}
+
+/* 하단 버튼 고정 */
+.modalActionsSticky {
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: #fff;
+    padding-top: 8px;
+}
+
+/* CSS Modules에서 공용 버튼을 타겟팅 */
+.modalActionsSticky :global(button) {
+    height: 48px;
+}
+
+/* 스캔 미리보기 이미지 박스 */
+.previewWrap {
+    padding: 0 16px 12px;
+}
+
+.previewBox {
+    width: 100%;
+    height: 180px;
+    border-radius: 12px;
+    background: #D9D9D9;
+    margin-bottom: 12px;
+}
+
+/* 상단 미리보기 카드(썸네일/텍스트/바코드) */
+.previewCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+}
+
+/* 대표 이미지 */
+.previewThumb {
+    width: 180px;
+    height: 150px;
+    border-radius: 12px;
+    border: none;
+    background: none;
+    background-size: cover;
+    background-position: center;
+}
+
+/* 브랜드명 + 상품명 */
+.previewTexts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.previewBrand {
+    font-weight: 700;
+    color: var(--theme-text);
+    margin-bottom: 4px;
+}
+
+.previewName {
+    font-size: 14px;
+    color: var(--theme-text-light);
+}
+
+/* 바코드 영역 */
+.previewBarcodeWrap {
+    width: 100%;
+    min-height: 80px;
+    border-radius: 0px;
+    background: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+/* 바코드 캔버스 */
+.previewBarcodeCanvas {
+    width: 280px !important;
+    height: 80px !important;
+    margin-bottom: 8px;
+}
+
+/* 바코드 번호 */
+.previewBarcodeNumber {
+    font-size: 60px;
+    font-weight: 600;
+    color: var(--theme-text);
+    text-align: center;
+    line-height: 1.4;
+}
+
+/** 폼 필드 (모달 내 입력 공통) */
+.field {
+    margin-bottom: 10px;
+}
+
+.fieldLabel {
+    font-size: 12px;
+    color: var(--theme-primary);
+    margin-bottom: 4px;
+}
+
+.input {
+    width: 100%;
+    height: 37px;
+    border-radius: 12px;
+    border: 2px solid #E2E8F0;
+    padding: 0 12px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+/** 액션 버튼 그룹(중복 정의: 레이아웃 변경 시점에 사용) */
+.modalActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: space-between;
+}
+
+/* 리스트(확장 사이즈 버전) */
+.gifticonList { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.gifticonItem {
+    display: flex; gap: 12px; align-items: center;
+    padding: 13px;
+    border: 1px solid var(--theme-secondary);
+    border-radius: 12px; background: #fff;
+}
+.thumb { width: 56px; height: 56px; border-radius: 12px; border: 1px solid var(--theme-secondary); flex-shrink: 0; background: var(--theme-bg); }
+.itemText { flex: 1; min-width: 0; }
+.brand { font-weight: 700; color: var(--theme-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.name { font-size: 14px; color: var(--theme-text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 상태 Pill */
+.statusPill { padding: 7px 8px; border-radius: 12px; font-size: 11.2px; font-weight: 600; white-space: nowrap; }
+.status_active { background: var(--theme-text-light-green); color: var(--theme-text-green); }
+.status_expired { background: #FEF2F2; color: #991B1B; }
+.status_used { background: #F3E8FF; color: var(--theme-primary); }
+
+/* 모달 하단 버튼 그리드 배치(두 버튼 균등 분할) */
+.modalActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* 입력 인풋(높이/색상 확장 버전) */
+.input {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--theme-secondary);
+    padding: 0 12px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #fff;
+    color: var(--color-input-text, #111827);
+}
+
+.input::placeholder {
+    color: var(--theme-light-gray); /* 회색 */
+}
+
+/* 날짜 필드 래퍼 */
+.dateField {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* 네이티브 date 인풋 */
+.inputDate {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 40px; /* 아이콘 자리 확보 */
+    color: var(--theme-light-gray); /* 기본 회색 */
+}
+
+/* 값이 입력된 경우 색상을 검정으로 */
+.inputDate[value]:not([value=""]) {
+    color: var(--color-input-text, #111827);
+}
+
+.inputDate::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    pointer-events: none;
+}
+.inputDate::-webkit-inner-spin-button,
+.inputDate::-webkit-clear-button {
+    display: none;
+}
+
+/* 아이콘 버튼: 인풋 안쪽 오른쪽 */
+.dateIconBtn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: #000; /* 항상 검은색 */
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: none !important;
+    outline: none;
+}
+.dateIconBtn:focus-visible {
+    box-shadow: 0 0 0 2px var(--theme-primary);
+}
+.dateIconBtn:active {
+    transform: translateY(calc(-50% + 0px)) scale(0.96);
+}

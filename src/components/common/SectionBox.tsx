@@ -1,4 +1,3 @@
-// src/components/common/SectionBox.tsx
 import type { CSSProperties, ReactNode } from "react";
 import type { AssetTab } from "@/components/wallet/AssetTabs";
 
@@ -46,7 +45,7 @@ export default function SectionBox({
                         left: "52%",
                         transform: "translateX(-52%)",
                     }),
-                marginTop: 12,
+                margin: "12px 0",
                 background: "#fff",
                 borderRadius: 12,
                 ...(outlined ? { border: "1px solid var(--theme-secondary)" } : {}),

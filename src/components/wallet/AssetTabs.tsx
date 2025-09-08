@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export type AssetTab = "card" | "membership" | "gifticon";
 
 export interface AssetTabsProps {
@@ -31,25 +33,30 @@ const itemBase: React.CSSProperties = {
     alignSelf: "stretch",
     paddingTop: 12,
     paddingBottom: 10,
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingLeft: 12,
+    paddingRight: 12,
     borderRadius: 8,
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     cursor: "pointer",
-    userSelect: "none" as const,
+    userSelect: "none",
     fontSize: 16,
     fontFamily: "inherit",
     fontWeight: 600,
-    textAlign: "center" as const,
+    textAlign: "center",
     transition: "background-color .15s ease, color .15s ease",
 };
 
 const selectedStyle: React.CSSProperties = {
     background: "var(--theme-primary)",
     color: "var(--color-white)",
+};
+
+const hoverStyle: React.CSSProperties = {
+    background: "var( --theme-bg)",
+    color: "var(--theme-primary)",
 };
 
 const unselectedStyle: React.CSSProperties = {
@@ -65,10 +72,18 @@ const label: Record<AssetTab, string> = {
 };
 
 export default function AssetTabs({ value, onChange, className }: AssetTabsProps) {
+    const [hovered, setHovered] = useState<AssetTab | null>(null);
+
     return (
         <div className={className} style={wrapStyle} role="tablist" aria-label="지갑 카테고리">
             {order.map((key) => {
                 const selected = key === value;
+                const style = selected
+                    ? selectedStyle
+                    : hovered === key
+                        ? hoverStyle
+                        : unselectedStyle;
+
                 return (
                     <div
                         key={key}
@@ -82,7 +97,9 @@ export default function AssetTabs({ value, onChange, className }: AssetTabsProps
                                 e.preventDefault();
                             }
                         }}
-                        style={{ ...itemBase, ...(selected ? selectedStyle : unselectedStyle) }}
+                        onMouseEnter={() => setHovered(key)}
+                        onMouseLeave={() => setHovered(null)}
+                        style={{ ...itemBase, ...style }}
                     >
                         {label[key]}
                     </div>
