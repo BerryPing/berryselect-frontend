@@ -87,13 +87,13 @@ const StatItem: React.FC<StatItemProps> = ({
                 height: 85,
                 left: 17,
                 top: 32,
-                position: 'absolute'
+                position: 'absolute',
             }}>
                 {/* 첫 번째 통계: 절감금액 */}
                 <div style={{
                     width: 98,
                     height: 85,
-                    paddingLeft: 8,
+                    paddingLeft: 2,
                     paddingRight: 8,
                     paddingTop: 12,
                     paddingBottom: 12,
@@ -104,7 +104,7 @@ const StatItem: React.FC<StatItemProps> = ({
                     justifyContent: 'flex-start',
                     alignItems: 'flex-start',
                     gap: 4,
-                    display: 'flex'
+                    display: 'flex',
                 }}>
                     {/* 첫 번째 값 */}
                     <div style={{

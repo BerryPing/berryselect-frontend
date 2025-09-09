@@ -1,21 +1,13 @@
 import React from 'react';
 import { Bell } from 'lucide-react';
 import berryLogo from '@/assets/imgs/berrylogo.png';
+import {useState} from "react";
 
 interface HomeGreetingCardProps {
-    // 사용자 이름
     userName?: string;
-
-    // 프로필 이미지 URL (선택적, 기본값은 berrylogo)
     profileImage?: string;
-
-    // 절약 금액
     savingsAmount?: number;
-
-    // 카드 클릭 핸들러
     onCardClick?: () => void;
-
-    // 알림 아이콘 클릭 핸들러
     onNotificationClick?: () => void;
 }
 
@@ -29,6 +21,8 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
     const formatAmount = (amount: number) => {
         return amount.toLocaleString();
     };
+
+    const [isNotificationHovered, setIsNotificationHovered] = useState(false);
 
     return (
         <div
@@ -178,14 +172,23 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                 {/* 알림 아이콘 */}
                 <div
                     style={{
-                        width: 24,
-                        height: 24,
+                        width: 30,
+                        height: 30,
                         left: 289,
                         top: 15,
                         position: 'absolute',
                         overflow: 'hidden',
-                        cursor: onNotificationClick ? 'pointer' : 'default'
+                        cursor: onNotificationClick ? 'pointer' : 'default',
+                        borderRadius: '20%',
+                        backgroundColor: isNotificationHovered ? 'rgba(0, 0, 0, 0.03)' : 'transparent',
+                        transition: 'all 0.2s ease',
+                        transform: isNotificationHovered ? 'scale(1.1)' : 'scale(1)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
                     }}
+                    onMouseEnter={() => setIsNotificationHovered(true)}
+                    onMouseLeave={() => setIsNotificationHovered(false)}
                     onClick={(e) => {
                         e.stopPropagation(); // 카드 클릭 이벤트 방지
                         if (onNotificationClick) {
