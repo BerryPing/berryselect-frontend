@@ -6,17 +6,7 @@ export interface CardItemProps {
     onOpenApp?: (cardId?: number) => void;
 }
 
-function splitName(name: string) {
-    const m = name.match(/^(.*?)(\s*\([^)]*\))\s*$/);
-    if (m) {
-        return { main: m[1].trim(), sub: m[2].trim() };
-    }
-    return { main: name, sub: "" };
-}
-
-export default function CardItem({ cardId, name, imageUrl, onClick, onOpenApp }: CardItemProps) {
-    const { main: mainName, sub: subName } = splitName(name);
-
+export default function CardItem({ cardId , imageUrl, onClick, onOpenApp }: CardItemProps) {
     return (
         <div
             onClick={() => onClick?.(cardId)}
@@ -39,7 +29,7 @@ export default function CardItem({ cardId, name, imageUrl, onClick, onOpenApp }:
                 style={{
                     width: 280,
                     height: 28,
-                    left: 20,
+                    left: 255,
                     top: 20,
                     position: "absolute",
                     display: "flex",
@@ -47,45 +37,6 @@ export default function CardItem({ cardId, name, imageUrl, onClick, onOpenApp }:
                     alignItems: "center",
                 }}
             >
-                {/* 이름: 2줄 렌더 */}
-                <div
-                    style={{
-                        color: "white",
-                        textShadow: "0 1px 3px rgba(0,0,0,0.35)",
-                        fontWeight: 700,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 2,
-                        maxWidth: 220,
-                    }}
-                    title={name}
-                >
-          <span
-              style={{
-                  fontSize: 18,
-                  lineHeight: "20px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-              }}
-          >
-            {mainName}
-          </span>
-                    {subName && (
-                        <span
-                            style={{
-                                fontSize: 14,
-                                lineHeight: "18px",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                opacity: 0.95,
-                            }}
-                        >
-              {subName}
-            </span>
-                    )}
-                </div>
 
                 {/* 결제 배지 */}
                 <div
