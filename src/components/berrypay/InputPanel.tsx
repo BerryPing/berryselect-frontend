@@ -1,9 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PriceButton } from './component/PriceButton';
 import { WarningIcon } from './component/WarningIcon';
 import { InfoIcon } from './component/InfoIcon';
 
-export const InputPanel = () => {
+interface InputPanelProps {
+  onSearch: (merchantId: number, amount: number, useGifticon: boolean) => void;
+  initialMerchantId?: number;
+  initialMerchantName?: string;
+}
+
+export const InputPanel = ({
+  onSearch,
+  initialMerchantId,
+  initialMerchantName,
+}: InputPanelProps) => {
+  const [merchantId, setMerchantId] = useState<number>(initialMerchantId ?? 1);
+  const [merchantName, setMerchantName] = useState<string>(
+    initialMerchantName ?? ''
+  );
+  const [amount, setAmount] = useState<number>(10000);
+  const [useGifticon, setUseGifticon] = useState<boolean>(true);
+
+  // ✅ prop이 바뀌면 state 갱신
+  useEffect(() => {
+    if (initialMerchantId) setMerchantId(initialMerchantId);
+    if (initialMerchantName) setMerchantName(initialMerchantName);
+  }, [initialMerchantId, initialMerchantName]);
+
+  const handleSubmit = () => {
+    if (!merchantId) return;
+    onSearch(merchantId, amount, useGifticon);
+  };
+
   const section = {
     backgroundColor: '#ffffff',
     border: '1px solid #e5d5f0',
@@ -52,7 +80,7 @@ export const InputPanel = () => {
     lineHeight: '1.4',
   } as React.CSSProperties;
 
-  const placeholderInput = {
+  const inputBox = {
     backgroundColor: '#ffffff',
     border: '1px solid #e5d5f0',
     borderRadius: '12px',
@@ -90,18 +118,19 @@ export const InputPanel = () => {
     fontWeight: '600',
   } as React.CSSProperties;
 
-  const toggle = {
-    position: 'relative',
-    width: '48px',
-    height: '20px',
-    backgroundColor: '#5f0080',
-    borderRadius: '14px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: '2px',
-  } as React.CSSProperties;
+  const toggle = (active: boolean) =>
+    ({
+      position: 'relative',
+      width: '48px',
+      height: '20px',
+      backgroundColor: active ? '#5f0080' : '#ccc',
+      borderRadius: '14px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: active ? 'flex-end' : 'flex-start',
+      padding: '2px',
+    } as React.CSSProperties);
 
   const toggleKnob = {
     width: '20px',
@@ -170,27 +199,47 @@ export const InputPanel = () => {
       <div style={inputSection}>
         <div style={inputGroup}>
           <div style={label}>가맹점</div>
-          <div style={placeholderInput}>가맹점명 입력</div>
+          <input
+            type="text"
+            value={merchantName}
+            onChange={(e) => setMerchantName(e.target.value)}
+            style={inputBox}
+            placeholder="가맹점명 입력"
+          />
           <div style={helperText}>보유 카드/멤버십 기준으로 추천해요</div>
         </div>
 
         {/* 결제 금액 */}
         <div style={inputGroup}>
           <div style={label}>결제 금액</div>
-          <div style={placeholderInput}>10,000</div>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(Number(e.target.value))}
+            style={inputBox}
+            placeholder="금액 입력"
+          />
 
-          {/* 가격 버튼들 */}
+          {/* 가격 버튼 */}
           <div style={buttonGroup}>
-            <PriceButton text="₩5,000" variant="selected" />
-            <PriceButton text="₩10,000" variant="default" />
-            <PriceButton text="₩30,000" variant="default" />
+            {[5000, 10000, 30000].map((price) => (
+              <div key={price} onClick={() => setAmount(price)}>
+                <PriceButton
+                  text={`₩${price.toLocaleString()}`}
+                  variant={amount === price ? 'selected' : 'default'}
+                />
+              </div>
+            ))}
           </div>
         </div>
 
         {/* 기프티콘 사용 토글 */}
         <div style={toggleSection}>
           <div style={toggleLabel}>기프티콘 사용</div>
-          <div style={toggle}>
+          <div
+            style={toggle(useGifticon)}
+            onClick={() => setUseGifticon(!useGifticon)}
+          >
             <div style={toggleKnob} />
           </div>
         </div>
@@ -211,7 +260,9 @@ export const InputPanel = () => {
         </div>
 
         {/* 추천 검색 버튼 */}
-        <button style={submitButton}>추천 검색하기</button>
+        <button style={submitButton} onClick={handleSubmit}>
+          추천 검색하기
+        </button>
       </div>
     </div>
   );

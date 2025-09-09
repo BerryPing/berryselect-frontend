@@ -11,23 +11,30 @@ import MyBerryPage from '@/pages/MyBerry/MyBerryPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import LoginPage from '@/pages/Auth/LoginPage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
-import AuthCallback from "@/pages/Auth/AuthCallback.tsx";
-import ReportPage from "@/pages/Report/ReportPage.tsx";
+import AuthCallback from '@/pages/Auth/AuthCallback.tsx';
+import ReportPage from '@/pages/Report/ReportPage.tsx';
+import MerchantSearchResultPage from '@/pages/merchantSearch/MerchantResultPage';
 
 export const router = createBrowserRouter([
-    {
-        path: '/',
-        element: <DefaultLayout />,            // 공통 프레임
-        children: [
-            { index: true, element: <HomePage /> },          // '/'
-            { path: 'berrypick', element: <BerryPickPage /> }, // '/berrypick'
-            { path: 'wallet', element: <WalletPage /> },       // '/wallet'
-            { path: 'myberry', element: <MyBerryPage /> },     // '/myberry'
-            { path: 'auth/login', element: <LoginPage /> },
-            { path: 'auth/register', element: <RegisterPage /> },
-            { path: 'auth/callback', element:<AuthCallback />},
-            { path: '*', element: <NotFoundPage /> },
-            { path: 'report', element: <ReportPage />},
-        ],
-    },
+  {
+    path: '/',
+    element: <DefaultLayout />, // 공통 프레임
+    children: [
+      { index: true, element: <HomePage /> }, // '/'
+      { path: 'berrypick', element: <BerryPickPage /> }, // '/berrypick'
+      { path: 'wallet', element: <WalletPage /> }, // '/wallet'
+      { path: 'myberry', element: <MyBerryPage /> }, // '/myberry'
+      { path: 'auth/login', element: <LoginPage /> },
+      { path: 'auth/register', element: <RegisterPage /> },
+      { path: 'auth/callback', element: <AuthCallback /> },
+      { path: '*', element: <NotFoundPage /> },
+      { path: 'report', element: <ReportPage /> },
+      {
+        path: 'merchant-search',
+        element: <MerchantSearchResultPage />,
+        handle: { noHeader: true },
+      },
+      // { path: "checkout", element: <CheckoutPage /> },
+    ],
+  },
 ]);
