@@ -13,6 +13,7 @@ import LoginPage from '@/pages/Auth/LoginPage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
 import AuthCallback from "@/pages/Auth/AuthCallback.tsx";
 import ReportPage from "@/pages/Report/ReportPage.tsx";
+import NotificationPage from "@/pages/Home/NotificationPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
             { path: 'auth/callback', element:<AuthCallback />},
             { path: '*', element: <NotFoundPage /> },
             { path: 'report', element: <ReportPage />},
+            { path: 'notification', element: <NotificationPage />},
         ],
     },
 ]);
