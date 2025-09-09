@@ -1,8 +1,16 @@
+// src/pages/Wallet/CardSection.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SectionBox from "@/components/common/SectionBox";
 import CardItem from "@/components/wallet/CardItem";
 import berrylogo from "@/assets/imgs/berrylogo.png";
-import { type CardSummary, getCards, getCardBenefits, type CardBenefitsGrouped, type BenefitGroup, type BenefitItem } from "@/api/walletApi";
+import {
+    type CardSummary,
+    getCards,
+    getCardBenefits,
+    type CardBenefitsGrouped,
+    type BenefitGroup,
+    type BenefitItem,
+} from "@/api/walletApi";
 import styles from "./WalletPage.module.css";
 import Button from "@/components/common/Button.tsx";
 import { getCardImage, getCardMeta } from "@/components/wallet/CardCatalog.ts";
@@ -46,9 +54,8 @@ function GroupList({ groups }: { groups: BenefitGroup[] }) {
 }
 
 /* -------------------- 카테고리 칩 -------------------- */
-// 고정 노출 순서: 전체 → 카페 → …
 const MASTER_CATS = ["전체", "카페", "편의점", "교통", "쇼핑", "음식", "기타"] as const;
-type MasterCat = typeof MASTER_CATS[number];
+type MasterCat = (typeof MASTER_CATS)[number];
 
 const catEmoji: Record<string, string> = {
     전체: "🐾",
@@ -60,8 +67,17 @@ const catEmoji: Record<string, string> = {
     기타: "✨",
 };
 
-// 카테고리 문자열 정규화(공백/개행/제어문자 제거, 트림)
-const normCat = (s?: string) => (s ?? "").replace(/\s+/g, "").trim();
+/** 카테고리 문자열 정규화 */
+const normCat = (s?: string) =>
+    (s ?? "")
+        .normalize("NFKC")
+        .replace(/[^\p{L}\p{N}]+/gu, "")
+        .toLowerCase();
+
+/** "카페"처럼 마스터 라벨을 정규화 키로 역매핑 */
+const MASTER_NORM_MAP = new Map<string, MasterCat>(
+    (MASTER_CATS as readonly string[]).map((c) => [normCat(c), c as MasterCat])
+);
 
 /* =============== Utils =============== */
 function computeActiveIndex(container: HTMLDivElement): number {
@@ -164,16 +180,22 @@ export default function CardSection() {
                 if (cancelled) return;
                 setBenefits(res);
 
-                // others에 실제 존재하는 카테고리 목록(정규화)
+                // others의 실제 존재 카테고리(정규화 키)
                 const available = new Set((res.others ?? []).map((g) => normCat(g.category)));
 
-                // 선호 카테고리 중 존재하는 첫 항목을 우선
-                const preferred = (settings?.preferredCategories ?? []).find((c) =>
-                    available.has(normCat(c))
-                ) as MasterCat | undefined;
-
-                // 없으면 "전체"
-                setActiveOther(preferred ?? "전체");
+                // 사용자 선호 중에서 실제 존재하는 첫 항목 찾기 → 마스터 라벨로 복원
+                let next: MasterCat | undefined;
+                for (const c of settings?.preferredCategories ?? []) {
+                    const key = normCat(c);
+                    if (available.has(key)) {
+                        const mapped = MASTER_NORM_MAP.get(key);
+                        if (mapped) {
+                            next = mapped;
+                            break;
+                        }
+                    }
+                }
+                setActiveOther(next ?? "전체");
             })
             .catch((e: unknown) => {
                 if (cancelled) return;
