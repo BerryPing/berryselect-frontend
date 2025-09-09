@@ -46,6 +46,18 @@ const GIFTICON_CATALOG: Record<string, GiftMeta> = {
         aliases: ["스타벅스 : 아이스 카페 아메리카노 T 2잔"],
         brand: "STARBUCKS",
     },
+    "스타벅스 더블 초콜릿 케이크": {
+        imageUrl:
+            "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/vendor_inventory/e798/3856f65f77f029009c750d8f44cfcb51a8ad5c3de16015f3c0663864b87f.jpg",
+        aliases: ["스타벅스 : 더블 초콜릿 케이크"],
+        brand: "STARBUCKS",
+    },
+    "GS25 남양 초코에몽": {
+        imageUrl:
+            "https://shoppingcdn.namyangi.com/attach/item/2023/202311/caaad8e7-3997-4ec4-a95d-5b2fbbedf830.jpg",
+        aliases: ["남양)초코에몽"],
+        brand: "GS25",
+    }
 };
 
 function norm(s: string) {
