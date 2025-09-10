@@ -6,7 +6,6 @@ import {useState} from "react";
 interface HomeGreetingCardProps {
     userName?: string;
     profileImage?: string;
-    savingsAmount?: number;
     unreadCount?: number;
     onCardClick?: () => void;
     onNotificationClick?: () => void;
@@ -15,15 +14,10 @@ interface HomeGreetingCardProps {
 const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                                                                userName = '김베리',
                                                                profileImage = berryLogo,
-                                                               savingsAmount = 23400,
                                                                unreadCount = 0,
                                                                onCardClick,
                                                                onNotificationClick
                                                            }) => {
-    const formatAmount = (amount: number) => {
-        return amount.toLocaleString();
-    };
-
     const [isNotificationHovered, setIsNotificationHovered] = useState(false);
 
     return (
@@ -89,14 +83,14 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
 
                     {/* 텍스트 영역 */}
                     <div style={{
-                        left: 60,
-                        top: 0,
+                        left: 70,
+                        top: 14,
                         position: 'absolute',
                         flexDirection: 'column',
                         justifyContent: 'flex-start',
                         alignItems: 'flex-start',
                         gap: 4,
-                        display: 'flex'
+                        display: 'flex',
                     }}>
                         {/* 인사말 */}
                         <div style={{
@@ -119,53 +113,6 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                                 wordWrap: 'break-word'
                             }}>
                                 안녕하세요 {userName}님
-                            </div>
-                        </div>
-
-                        {/* 절약 메시지 */}
-                        <div style={{
-                            alignSelf: 'stretch',
-                            paddingTop: 1,
-                            paddingBottom: 2,
-                            flexDirection: 'column',
-                            justifyContent: 'flex-start',
-                            alignItems: 'flex-start',
-                            display: 'flex'
-                        }}>
-                            <div style={{
-                                justifyContent: 'flex-start',
-                                display: 'flex',
-                                flexDirection: 'row',
-                                alignItems: 'baseline',
-                                gap: '5px'
-                            }}>
-                                <span style={{
-                                    color: 'var(--color-violet-55, #9B4DCC)',
-                                    fontSize: 13.6,
-                                    fontFamily: 'Roboto, sans-serif',
-                                    fontWeight: '400',
-                                    wordWrap: 'break-word'
-                                }}>
-                                    이번 달
-                                </span>
-                                <span style={{
-                                    color: 'var(--color-violet-25, #5F0080)',
-                                    fontSize: 13.6,
-                                    fontFamily: 'Roboto, sans-serif',
-                                    fontWeight: '700',
-                                    wordWrap: 'break-word'
-                                }}>
-                                    {formatAmount(savingsAmount)}원
-                                </span>
-                                <span style={{
-                                    color: 'var(--color-violet-55, #9B4DCC)',
-                                    fontSize: 13.6,
-                                    fontFamily: 'Roboto, sans-serif',
-                                    fontWeight: '400',
-                                    wordWrap: 'break-word'
-                                }}>
-                                    절약했어요 💰
-                                </span>
                             </div>
                         </div>
                     </div>

@@ -91,7 +91,6 @@ const HomePage = () => {
                 {/* 인사 카드 */}
                 <HomeGreetingCard
                     userName="김베리"
-                    savingsAmount={23400}
                     unreadCount={unreadNotificationCount}
                     onNotificationClick={() => {
                         navigate('/notification');
