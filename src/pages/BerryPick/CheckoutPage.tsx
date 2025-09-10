@@ -1,12 +1,47 @@
 import { useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { recoApi } from '@/api/recoApi';
+import { CheckoutMerchantCard } from '@/components/berrypay/CheckoutMerchantCard';
+import { CheckoutCombinationCard } from '@/components/berrypay/CheckoutCombinationCard';
+import { CheckoutDetailCard } from '@/components/berrypay/CheckoutDetailCard';
+import Button from '@/components/common/Button';
+import type { Option, SessionResponse } from '@/types/reco';
+import Header from '@/components/layout/Header';
 
 const CheckoutPage = () => {
   const location = useLocation();
-  const { sessionId, optionId, merchantId, paidAmount } = location.state || {};
-  const [showModal, setShowModal] = useState(false);
+  const {
+    sessionId,
+    optionId,
+    merchantId,
+    merchantName,
+    merchantAddress,
+    paidAmount,
+  } = location.state || {};
 
+  const [showModal, setShowModal] = useState(false);
+  const [session, setSession] = useState<SessionResponse | null>(null);
+  const [selectedOption, setSelectedOption] = useState<Option | null>(null);
+
+  // 세션 상세 불러오기
+  useEffect(() => {
+    if (!sessionId) return;
+    const fetchSession = async () => {
+      try {
+        const res = await recoApi.getSession(sessionId);
+        setSession(res.data);
+        const opt = res.data.options.find(
+          (o: Option) => o.optionId === optionId
+        );
+        setSelectedOption(opt || null);
+      } catch (err) {
+        console.error('세션 조회 실패:', err);
+      }
+    };
+    fetchSession();
+  }, [sessionId, optionId]);
+
+  // 잘못된 접근 처리 (훅 아래로 옮김)
   if (!sessionId || !optionId || !merchantId || !paidAmount) {
     return <div>잘못된 접근입니다.</div>;
   }
@@ -28,27 +63,58 @@ const CheckoutPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <h1 className="text-xl font-bold mb-4">결제 준비</h1>
+      <Header></Header>
+      {/* 가맹점 & 결제 금액 */}
+      <CheckoutMerchantCard
+        name={merchantName ?? '알 수 없는 가맹점'}
+        address={merchantAddress ?? ''}
+        amount={paidAmount}
+      />
 
-      {/* 선택된 가맹점 & 금액 */}
-      <div className="bg-white p-4 rounded shadow mb-4">
-        <p className="font-semibold">가맹점 ID: {merchantId}</p>
-        <p>결제 금액: {paidAmount.toLocaleString()}원</p>
-      </div>
+      {/* 추천 조합 */}
+      {selectedOption && (
+        <CheckoutCombinationCard
+          items={selectedOption.items.map((item) => ({
+            title: item.title,
+            subtitle: item.subtitle,
+            value: item.appliedValue,
+          }))}
+        />
+      )}
 
-      {/* 추천 조합 / 상세 내역 (TODO: recoApi.getSession으로 보강 가능) */}
-      <div className="bg-purple-600 text-white p-4 rounded-lg mb-4">
-        <p className="font-semibold">베리셀렉트 추천 조합</p>
-        <p>세션 ID: {sessionId}</p>
-        <p>옵션 ID: {optionId}</p>
-      </div>
+      {/* 결제 상세 */}
+      {selectedOption && (
+        <CheckoutDetailCard
+          original={session?.inputAmount ?? paidAmount}
+          details={[
+            ...selectedOption.items.map((item) => ({
+              label: item.title,
+              value: item.appliedValue,
+              type: 'discount' as const,
+            })),
+            {
+              label: '최종 결제 금액',
+              value: selectedOption.expectedPay,
+              type: 'final' as const,
+            },
+          ]}
+          totalSave={selectedOption.expectedSave}
+          percent={Math.round(
+            (selectedOption.expectedSave /
+              (session?.inputAmount ?? paidAmount)) *
+              100
+          )}
+        />
+      )}
 
-      <button
-        onClick={() => setShowModal(true)}
-        className="w-full bg-green-600 text-white py-2 rounded-md font-semibold"
+      {/* 결제하기 버튼 */}
+      <div
+        style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}
       >
-        결제하기
-      </button>
+        <Button fullWidth variant="purple" onClick={() => setShowModal(true)}>
+          결제하기
+        </Button>
+      </div>
 
       {/* 결제 모달 */}
       {showModal && (

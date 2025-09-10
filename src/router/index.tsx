@@ -14,6 +14,7 @@ import RegisterPage from '@/pages/Auth/RegisterPage';
 import AuthCallback from '@/pages/Auth/AuthCallback.tsx';
 import ReportPage from '@/pages/Report/ReportPage.tsx';
 import MerchantSearchResultPage from '@/pages/merchantSearch/MerchantResultPage';
+import CheckoutPage from '@/pages/BerryPick/CheckoutPage.tsx';
 
 export const router = createBrowserRouter([
   {
@@ -30,11 +31,14 @@ export const router = createBrowserRouter([
       { path: '*', element: <NotFoundPage /> },
       { path: 'report', element: <ReportPage /> },
       {
+        path: 'checkout',
+        element: <CheckoutPage />,
+      },
+      {
         path: 'merchant-search',
         element: <MerchantSearchResultPage />,
         handle: { noHeader: true },
       },
-      // { path: "checkout", element: <CheckoutPage /> },
     ],
   },
 ]);

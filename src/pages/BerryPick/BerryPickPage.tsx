@@ -53,6 +53,9 @@ const BerryPickPage = () => {
         optionId,
         merchantId,
         paidAmount,
+
+        merchantName: selectedMerchant?.name,
+        merchantAddress: selectedMerchant?.address,
       },
     });
   };

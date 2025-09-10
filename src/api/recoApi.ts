@@ -1,6 +1,6 @@
 import http from './http';
 
-const DEFAULT_USER_ID = 1;
+const DEFAULT_USER_ID = 2;
 
 export const recoApi = {
   // 세션 생성
