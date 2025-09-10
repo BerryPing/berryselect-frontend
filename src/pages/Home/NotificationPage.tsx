@@ -6,7 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import {
     getNotifications,
     markNotificationAsRead,
-    mapNotificationResponse
+    mapNotificationResponse,
 } from '@/api/notificationApi';
 
 import type {Notification, NotificationCategory} from "@/types/notification";

@@ -1,39 +1,6 @@
 // src/api/notificationApi.ts
 import  api  from '@/api/http';
-import type { ApiResponse, PageResponse, NotificationResponse } from '@/types/notification';
-
-// 알림 카테고리 타입
-export type NotificationCategory = 'all' | 'budget' | 'gifticon' | 'benefit';
-
-// 알림 응답 타입 (백엔드 NotificationResponse와 매핑)
-export interface NotificationResponse {
-    id: number;
-    userId: number;
-    title: string;
-    message: string;
-    type: string;
-    isRead: boolean;
-    createdAt: string;
-    readAt?: string;
-}
-
-// 프론트엔드에서 사용할 알림 타입 (기존 인터페이스와 호환)
-export interface Notification {
-    id: string;
-    storeName: string;
-    description: string;
-    iconText: string;
-    isRead: boolean;
-    category: NotificationCategory;
-    createdAt?: string;
-}
-
-// 페이지네이션 파라미터
-export interface NotificationListParams {
-    page?: number;
-    size?: number;
-    sort?: string;
-}
+import type { ApiResponse, PageResponse, NotificationResponse, Notification, NotificationCategory, NotificationListParams } from '@/types/notification';
 
 // 알림 목록 조회
 export const getNotifications = async (
@@ -46,15 +13,69 @@ export const getNotifications = async (
             sort: params.sort || 'createdAt,desc'
         };
 
-        const response = await api.get<ApiResponse<PageResponse<NotificationResponse>>>(
+        console.log('🔍 알림 API 요청:', '/notifications', queryParams);
+
+        const response = await api.get<PageResponse<NotificationResponse>>(
             '/notifications',
             { params: queryParams }
         );
 
-        return response.data.data;
+        console.log('📦 전체 응답:', response);
+        console.log('📋 응답 데이터:', response.data);
+
+        // 2단계: response.data 검증
+        if (!response.data) {
+            throw new Error('응답에 data 필드가 없습니다');
+        }
+
+        const pageData = response.data;
+
+        console.log('📄 페이지 데이터:', pageData);
+        console.log('📝 컨텐츠 배열:', pageData?.content);
+
+        // 4단계: content 배열 검증
+        if (!pageData.content) {
+            console.warn('⚠️ PageResponse에 content 필드가 없습니다. 전체 pageData:', pageData);
+
+            return {
+                content: [],
+                totalElements: 0,
+                totalPages: 0,
+                size: params.size || 20,
+                number: params.page || 0,
+                numberOfElements: 0,
+                first: true,
+                last: true,
+                empty: true
+            };
+        }
+
+        if (!Array.isArray(pageData.content)) {
+            console.warn('⚠️ content가 배열이 아닙니다:', typeof pageData.content, pageData.content);
+
+            // content가 배열이 아니면 빈 배열로 처리
+            return {
+                ...pageData,
+                content: []
+            };
+        }
+
+        console.log('✅ 알림 데이터 검증 완료, 알림 개수:', pageData.content.length);
+
+        return pageData;
 
     } catch (error) {
-        console.error('알림 목록 조회 실패:', error);
+        console.error('❌ 알림 목록 조회 실패:', error);
+
+        // axios 에러인 경우 상세 정보 출력
+        if (error && typeof error === 'object' && 'response' in error) {
+            const axiosError = error as any;
+            console.error('HTTP 상태:', axiosError.response?.status);
+            console.error('응답 헤더:', axiosError.response?.headers);
+            console.error('응답 데이터:', axiosError.response?.data);
+            console.error('요청 URL:', axiosError.config?.url);
+        }
+
         throw error;
     }
 };
@@ -62,8 +83,8 @@ export const getNotifications = async (
 // 읽지 않은 알림 개수 조회
 export const getUnreadNotificationCount = async (): Promise<number> => {
     try {
-        const response = await api.get<ApiResponse<number>>('/notifications/unread-count');
-        return response.data.data;
+        const response = await api.get<number>('/notifications/unread-count');
+        return response.data;
 
     } catch (error) {
         console.error('읽지 않은 알림 개수 조회 실패:', error);
@@ -74,7 +95,7 @@ export const getUnreadNotificationCount = async (): Promise<number> => {
 // 알림 읽음 처리
 export const markNotificationAsRead = async (notificationId: number): Promise<void> => {
     try {
-        await api.put<ApiResponse<void>>(`/notifications/${notificationId}/read`);
+        await api.put<void>(`/notifications/${notificationId}/read`);
 
     } catch (error) {
         console.error('알림 읽음 처리 실패:', error);
@@ -85,8 +106,8 @@ export const markNotificationAsRead = async (notificationId: number): Promise<vo
 // 테스트 알림 발송
 export const sendTestNotification = async (): Promise<NotificationResponse> => {
     try {
-        const response = await api.post<ApiResponse<NotificationResponse>>('/notifications/test');
-        return response.data.data;
+        const response = await api.post<NotificationResponse>('/notifications/test');
+        return response.data;
 
     } catch (error) {
         console.error('테스트 알림 발송 실패:', error);
@@ -147,4 +168,13 @@ const getStoreIcon = (title: string): string => {
     // 기본값: 첫 두 글자
     const firstTwoChars = title.substring(0, 2);
     return firstTwoChars || '📢';
+};
+
+export type {
+    NotificationResponse,
+    Notification,
+    NotificationCategory,
+    NotificationListParams,
+    PageResponse,
+    ApiResponse
 };
