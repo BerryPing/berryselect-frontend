@@ -21,36 +21,7 @@ interface NotificationListProps {
 }
 
 const NotificationList: React.FC<NotificationListProps> = ({
-                                                               notifications = [
-                                                                   {
-                                                                       id: '1',
-                                                                       storeName: 'GS25',
-                                                                       description: '편의점 적립 5% + 쿠폰',
-                                                                       iconText: 'GS',
-                                                                       isRead: false
-                                                                   },
-                                                                   {
-                                                                       id: '2',
-                                                                       storeName: '스타벅스',
-                                                                       description: '카페 할인 이벤트 진행 중',
-                                                                       iconText: 'ST',
-                                                                       isRead: true
-                                                                   },
-                                                                   {
-                                                                       id: '3',
-                                                                       storeName: '롯데마트',
-                                                                       description: '생필품 20% 할인',
-                                                                       iconText: 'LM',
-                                                                       isRead: false
-                                                                   },
-                                                                   {
-                                                                       id: '4',
-                                                                       storeName: 'CU',
-                                                                       description: '1+1 이벤트 상품',
-                                                                       iconText: 'CU',
-                                                                       isRead: true
-                                                                   }
-                                                               ],
+                                                               notifications = [],
                                                                onNotificationClick,
                                                                emptyMessage = '새로운 알림이 없습니다.'
                                                            }) => {

@@ -8,6 +8,7 @@ import RecentTransactionCard from "@/components/report/Transaction/RecentTransac
 import { getRecentTransactions } from "@/api/transactionApi.ts";
 import type { TransactionDetailResponse } from "@/types/transaction";
 import { useNavigate } from 'react-router-dom';
+import {getUnreadNotificationCount} from "@/api/notificationApi.ts";
 
 const HomePage = () => {
     const [searchValue, setSearchValue] = useState('');
@@ -15,6 +16,24 @@ const HomePage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+
+    const [unreadNotificationCount, setUnreadNotificationCount] = useState<number>(0);
+
+    // 읽지 않은 알림 개수 조회 함수
+    const fetchUnreadCount = async () => {
+        try {
+            console.log('읽지 않은 알림 개수 조회 중...');
+
+            const count = await getUnreadNotificationCount();
+            setUnreadNotificationCount(count);
+            console.log('읽지 않은 알림 개수:', count);
+
+        } catch (error) {
+            console.error('알림 개수 조회 중 오류:', error);
+            // 에러가 발생해도 0으로 설정하여 UI는 정상 표시
+            setUnreadNotificationCount(0);
+        }
+    };
 
     // 최근 거래 내역 조회 함수
     const fetchRecentTransactions = async () => {
@@ -57,6 +76,7 @@ const HomePage = () => {
     // 컴포넌트 마운트 시 거래 내역 로드
     useEffect(() => {
         fetchRecentTransactions();
+        fetchUnreadCount();
     }, []);
 
     return (
@@ -72,6 +92,7 @@ const HomePage = () => {
                 <HomeGreetingCard
                     userName="김베리"
                     savingsAmount={23400}
+                    unreadCount={unreadNotificationCount}
                     onNotificationClick={() => {
                         navigate('/notification');
                     }}

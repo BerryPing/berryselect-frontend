@@ -7,6 +7,7 @@ interface HomeGreetingCardProps {
     userName?: string;
     profileImage?: string;
     savingsAmount?: number;
+    unreadCount?: number;
     onCardClick?: () => void;
     onNotificationClick?: () => void;
 }
@@ -15,6 +16,7 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                                                                userName = '김베리',
                                                                profileImage = berryLogo,
                                                                savingsAmount = 23400,
+                                                               unreadCount = 0,
                                                                onCardClick,
                                                                onNotificationClick
                                                            }) => {
@@ -177,7 +179,7 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                         left: 289,
                         top: 15,
                         position: 'absolute',
-                        overflow: 'hidden',
+                        overflow: 'visible',
                         cursor: onNotificationClick ? 'pointer' : 'default',
                         borderRadius: '20%',
                         backgroundColor: isNotificationHovered ? 'rgba(0, 0, 0, 0.03)' : 'transparent',
@@ -197,6 +199,37 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                     }}
                 >
                     <Bell size={22} color="#5F0080" />
+                    {/* 읽지 않은 알림 배지 */}
+                    {unreadCount > 0 && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: -2,
+                                right: -2,
+                                minWidth: 12,
+                                height: 12,
+                                backgroundColor: '#f2537d', // 빨간색 배지
+                                borderRadius: 6,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 8,
+                                fontWeight: '700',
+                                color: 'white',
+                                fontFamily: 'Roboto, sans-serif',
+                                padding: '0 2px',
+                                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
+                                border: '2px solid white', // 배경과 구분되도록 테두리
+                                zIndex: 10,
+                                maxWidth: 24,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
