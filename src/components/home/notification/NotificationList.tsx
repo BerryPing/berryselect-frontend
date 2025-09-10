@@ -57,7 +57,7 @@ const NotificationList: React.FC<NotificationListProps> = ({
     if (!notifications || notifications.length === 0) {
         return (
             <div style={{
-                width: '100%',
+                width: '273px',
                 padding: '40px',
                 textAlign: 'center',
                 color: 'var(--theme-text-light, #9B4DCC)',

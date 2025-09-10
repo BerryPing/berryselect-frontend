@@ -24,7 +24,7 @@ const HomePage = () => {
         try {
             console.log('최근 거래 내역 조회 중...');
 
-            const transactions = await getRecentTransactions(undefined, 5);
+            const transactions = await getRecentTransactions(undefined, 3);
             setRecentTransactions(transactions);
 
         } catch (error: unknown) {
@@ -130,7 +130,7 @@ const HomePage = () => {
                             // 오른쪽 상단 영역 클릭시
                             if (clickX > rect.width - 60 && clickY < 25) {
                                 console.log('전체보기 클릭됨');
-                                // 여기에 전체 거래 내역 페이지로 이동하는 로직 추가
+                                navigate('/report');
                             }
                         }}
                     >
