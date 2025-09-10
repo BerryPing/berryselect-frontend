@@ -11,12 +11,14 @@ export type GifticonStatus = "ACTIVE" | "USED" | "EXPIRED";
  * ===================== */
 export interface CardSummary {
     cardId: number;
+    assetId?: number;
     name?: string;
     issuer?: string;
     last4?: string;
     thisMonthSpend?: number;
     [key: string]: unknown;
 }
+
 export interface CardDetail extends CardSummary {
     [key: string]: unknown;
 }
@@ -25,7 +27,10 @@ type CardsEnvelope = {
     type: "CARD";
     items: Array<{
         id: number;
+        productId?: number;
+        product_id?: number;
         productName?: string;
+        name?: string;
         issuer?: string;
         last4?: string;
         thisMonthSpend?: number;
@@ -36,14 +41,22 @@ type CardsEnvelope = {
 export async function getCards(): Promise<CardSummary[]> {
     const res = await http.get<CardsEnvelope>("/wallet/cards");
     const body = res.data;
+
     if (body?.type === "CARD" && Array.isArray(body.items)) {
-        return body.items.map((it) => ({
-            cardId: it.id,
-            name: it.productName,
-            issuer: it.issuer,
-            last4: it.last4,
-            thisMonthSpend: it.thisMonthSpend,
-        }));
+        return body.items.map((it) => {
+            const productId =
+                (it.productId as number | undefined) ??
+                (it.product_id as number | undefined);
+
+            return {
+                cardId: productId ?? it.id,
+                assetId: it.id,
+                name: it.productName ?? it.name,
+                issuer: it.issuer,
+                last4: it.last4,
+                thisMonthSpend: it.thisMonthSpend,
+            };
+        });
     }
     return [];
 }
