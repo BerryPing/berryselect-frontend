@@ -22,7 +22,6 @@ interface HomeAlertCardProps {
 
 const HomeAlertCard: React.FC<HomeAlertCardProps> = ({
                                                          title = '기프티콘 만료 D-3',
-                                                         description = '스타벅스 아메리카노',
                                                          icon = '🔔',
                                                          iconBgColor = 'var(--theme-text-light-yellow, #FEF3CD)',
                                                          iconTextColor = 'var(--theme-text-bold-yellow, #92400E)',
@@ -117,31 +116,6 @@ const HomeAlertCard: React.FC<HomeAlertCardProps> = ({
                         wordWrap: 'break-word'
                     }}>
                         {title}
-                    </div>
-                </div>
-
-                {/* 부제목 */}
-                <div style={{
-                    alignSelf: 'stretch',
-                    paddingTop: 3,
-                    paddingBottom: 2,
-                    flexDirection: 'column',
-                    justifyContent: 'flex-start',
-                    alignItems: 'flex-start',
-                    display: 'flex'
-                }}>
-                    <div style={{
-                        alignSelf: 'stretch',
-                        justifyContent: 'center',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        color: 'var(--theme-text-light, #9B4DCC)',
-                        fontSize: 12.8,
-                        fontFamily: 'Roboto, sans-serif',
-                        fontWeight: '400',
-                        wordWrap: 'break-word'
-                    }}>
-                        {description}
                     </div>
                 </div>
             </div>

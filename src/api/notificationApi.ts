@@ -1,6 +1,7 @@
 // src/api/notificationApi.ts
 import  api  from '@/api/http';
 import type { ApiResponse, PageResponse, NotificationResponse, Notification, NotificationCategory, NotificationListParams } from '@/types/notification';
+import {AxiosError} from "axios";
 
 // 알림 목록 조회
 export const getNotifications = async (
@@ -68,12 +69,11 @@ export const getNotifications = async (
         console.error('❌ 알림 목록 조회 실패:', error);
 
         // axios 에러인 경우 상세 정보 출력
-        if (error && typeof error === 'object' && 'response' in error) {
-            const axiosError = error as any;
-            console.error('HTTP 상태:', axiosError.response?.status);
-            console.error('응답 헤더:', axiosError.response?.headers);
-            console.error('응답 데이터:', axiosError.response?.data);
-            console.error('요청 URL:', axiosError.config?.url);
+        if (error instanceof AxiosError) {
+            console.error('HTTP 상태:', error.response?.status);
+            console.error('응답 헤더:', error.response?.headers);
+            console.error('응답 데이터:', error.response?.data);
+            console.error('요청 URL:', error.config?.url);
         }
 
         throw error;

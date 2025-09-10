@@ -8,7 +8,8 @@ import RecentTransactionCard from "@/components/report/Transaction/RecentTransac
 import { getRecentTransactions } from "@/api/transactionApi.ts";
 import type { TransactionDetailResponse } from "@/types/transaction";
 import { useNavigate } from 'react-router-dom';
-import {getUnreadNotificationCount} from "@/api/notificationApi.ts";
+import {getUnreadNotificationCount, getNotifications} from "@/api/notificationApi.ts";
+import type {NotificationResponse} from "@/api/notificationApi.ts";
 
 const HomePage = () => {
     const [searchValue, setSearchValue] = useState('');
@@ -18,6 +19,36 @@ const HomePage = () => {
     const navigate = useNavigate();
 
     const [unreadNotificationCount, setUnreadNotificationCount] = useState<number>(0);
+
+    const [latestAlert, setLatestAlert] = useState<NotificationResponse | null>(null);
+    const [alertLoading, setAlertLoading] = useState(true);
+
+    const fetchLatestAlert = async () => {
+        try {
+            setAlertLoading(true);
+            const response = await getNotifications({
+                page: 0,
+                size: 1,
+                sort: 'createdAt,desc'
+            });
+
+            if (response.content && response.content.length > 0) {
+                setLatestAlert(response.content[0]);
+            } else {
+                setLatestAlert(null);
+            }
+        } catch (error) {
+            console.error('최신 알림 조회 중 오류:', error);
+            setLatestAlert(null);
+        } finally {
+            setAlertLoading(false);
+        }
+    };
+
+    const handleAlertClick = () => {
+        console.log('알림 카드 클릭됨');
+        navigate('/wallet');
+    };
 
     // 읽지 않은 알림 개수 조회 함수
     const fetchUnreadCount = async () => {
@@ -68,15 +99,69 @@ const HomePage = () => {
         }
     };
 
+    // 알림 타입에 따른 스타일 반환
+    const getAlertStyle = (notificationType: string) => {
+        const type = notificationType?.toLowerCase() || '';
+
+        if (type.includes('기프티콘') || type.includes('gifticon')) {
+            return {
+                icon: '🎁',
+                iconBgColor: '#FEF3CD', // 노란색
+                iconTextColor: '#92400E'
+            };
+        } else if (type.includes('예산') || type.includes('budget')) {
+            return {
+                icon: '💰',
+                iconBgColor: '#FEE2E2', // 빨간색
+                iconTextColor: '#991B1B'
+            };
+        } else if (type.includes('혜택') || type.includes('benefit') || type.includes('이벤트')) {
+            return {
+                icon: '✨',
+                iconBgColor: '#E0E7FF', // 파란색
+                iconTextColor: '#3730A3'
+            };
+        } else {
+            return {
+                icon: '🔔',
+                iconBgColor: '#F3E8FF', // 보라색
+                iconTextColor: '#6B21A8'
+            };
+        }
+    };
+
+    // 알림 제목을 간단하게 포맷팅하는 함수
+    const formatAlertTitle = (notification: NotificationResponse) => {
+        const type = notification.notificationType?.toLowerCase() || '';
+
+        if (type.includes('기프티콘') || type.includes('gifticon')) {
+            // 백엔드에서 "3일 후 만료 예정" 이런 텍스트가 온다면 파싱
+            const bodyText = notification.body || '';
+
+            // "3일 후" 패턴 찾기
+            const daysMatch = bodyText.match(/(\d+)일\s*후/);
+            if (daysMatch) {
+                const days = daysMatch[1];
+                return `기프티콘 만료 D-${days}`;
+            }
+
+            // 기본값
+            return '기프티콘 만료 알림';
+        }
+
+        // 다른 알림 타입들
+        return notification.title || '새로운 알림';
+    };
+
     // 재시도 핸들러
     const handleRetry = () => {
         fetchRecentTransactions();
     };
 
-    // 컴포넌트 마운트 시 거래 내역 로드
     useEffect(() => {
         fetchRecentTransactions();
         fetchUnreadCount();
+        fetchLatestAlert();
     }, []);
 
     return (
@@ -106,14 +191,18 @@ const HomePage = () => {
                     />
                 </div>
 
-                {/* 알림 카드 */}
-                <div style={{ marginTop: '16px' }}>
-                    <HomeAlertCard
-                        title="기프티콘 만료 D-3"
-                        description="스타벅스 아메리카노"
-                        onCardClick={() => console.log('알림 카드 클릭됨')}
-                    />
-                </div>
+                {/* 알림 카드 - 백엔드 연동 */}
+                {!alertLoading && latestAlert && (
+                    <div style={{ marginTop: '16px' }}>
+                        <HomeAlertCard
+                            title={formatAlertTitle(latestAlert)}
+                            icon={getAlertStyle(latestAlert.notificationType || '').icon}
+                            iconBgColor={getAlertStyle(latestAlert.notificationType || '').iconBgColor}
+                            iconTextColor={getAlertStyle(latestAlert.notificationType || '').iconTextColor}
+                            onCardClick={handleAlertClick}
+                        />
+                    </div>
+                )}
 
                 {/* 최근 거래 카드 */}
                 <div style={{ marginTop: '16px' }}>
