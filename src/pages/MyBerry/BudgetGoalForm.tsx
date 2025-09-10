@@ -1,18 +1,10 @@
 // src/pages/MyBerry/BudgetGoalForm.tsx
 import React, { useMemo, useState } from "react";
 import styles from "./BudgetGoalForm.module.css";
+import { upsertBudget, type Budget } from "@/api/myberryApi";
 
-export type Budget = {
-    yearMonth: string;
-    amountTarget: number;
-    amountSpent: number;
-    amountRemaining: number;
-    exceeded: boolean;
-    updatedAt: string;
-};
 
 type Props = {
-    apiBaseUrl?: string;
     /** 모달 열렸을 때 기본값으로 보여줄 금액 (선택) */
     initialTarget?: number;
     /** “지난달 소비 금액” 힌트 (선택, 없으면 문구 숨김) */
@@ -25,7 +17,6 @@ type Props = {
 };
 
 const BudgetGoalForm: React.FC<Props> = ({
-                                             apiBaseUrl = "http://localhost:8080",
                                              initialTarget = 0,
                                              lastMonthSpentHint,
                                              onSaved,
@@ -55,6 +46,7 @@ const BudgetGoalForm: React.FC<Props> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
         if (amountTarget <= 0) {
             setError("목표 금액은 1원 이상이어야 해요.");
             return;
@@ -62,18 +54,7 @@ const BudgetGoalForm: React.FC<Props> = ({
 
         try {
             setSaving(true);
-            const token = localStorage.getItem("accessToken");
-            const res = await fetch(`${apiBaseUrl}/myberry/budgets`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: token ? `Bearer ${token}` : "",
-                },
-                body: JSON.stringify({ yearMonth, amountTarget }),
-            });
-            if (!res.ok) throw new Error(await res.text());
-            const json = await res.json();
-            const saved: Budget = json.data ?? json;
+            const saved = await upsertBudget(yearMonth, amountTarget);
             onSaved?.(saved);
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);

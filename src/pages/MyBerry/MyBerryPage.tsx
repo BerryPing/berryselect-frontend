@@ -6,27 +6,15 @@ import { useNavigate } from "react-router-dom";
 
 import Modal from "@/components/common/Modal";
 import BudgetGoalForm from "./BudgetGoalForm";
-import type { Budget } from "./BudgetGoalForm";
+// import type { Budget } from "./BudgetGoalForm";
 
-
+import { fetchMyProfile, fetchBudget, type Budget } from "@/api/myberryApi.ts";
 
 interface Props {
     displayName?: string;
-    apiBaseUrl?: string;
 }
 
-type UserProfile = {
-    id: number;
-    name?: string | null;
-    phone?: string | null;
-    birth?: string | null;
-};
-
-
-const MyBerryPage: React.FC<Props> = ({
-                                          displayName,
-                                          apiBaseUrl = "http://localhost:8080",
-                                      }) => {
+const MyBerryPage: React.FC<Props> = ({displayName}) => {
     const navigate = useNavigate();
 
     const [name, setName] = useState<string>(
@@ -34,10 +22,8 @@ const MyBerryPage: React.FC<Props> = ({
     );
 
     const [budget, setBudget] = useState<Budget | null>(null);
-
     // 지난달 소비 금액 상태 추가
     const [lastMonthSpent, setLastMonthSpent] = useState<number | null>(null);
-
     // 모달 열림 상태
     const [isModalOpen, setIsModalOpen] = useState(false);
     //모달 열기/닫기 핸들러
@@ -45,30 +31,18 @@ const MyBerryPage: React.FC<Props> = ({
     const closeModal = () => setIsModalOpen(false);
 
     // 프로필 가져오기
-    useEffect(()=>{
-        const token = localStorage.getItem("accessToken");
-        if(!token) return;
-
-        fetch(`${apiBaseUrl}/users/me`, {
-            headers : {Authorization : `Bearer ${token}`},
-        })
-            .then(async(res) => {
-                if(res.status === 401){
-                    throw new Error("UNAUTHORIZED");
-                }
-                if(!res.ok)throw new Error(await res.text());
-                return res.json();
-            })
-            .then((json) => {
-                const profile : UserProfile = json?.data ?? json;
-                const display = (profile.name && profile.name.trim())? profile.name : "김베리";
+    useEffect(() => {
+        fetchMyProfile()
+            .then((profile) => {
+                const display =
+                    profile.name && profile.name.trim() ? profile.name : "김베리";
                 setName(display);
                 localStorage.setItem("displayName", display);
             })
             .catch((e) => {
                 console.warn("profile fetch error:", e);
             });
-    },[apiBaseUrl, displayName]);
+    }, []);
 
     // Esc로 닫기 + 배경 스크롤 잠금 (옵션)
     useEffect(() => {
@@ -84,7 +58,6 @@ const MyBerryPage: React.FC<Props> = ({
     }, [isModalOpen]);
 
 
-
     // 진행률 계산
     const progress = useMemo(() => {
         if (!budget) return 0;
@@ -96,50 +69,28 @@ const MyBerryPage: React.FC<Props> = ({
 
     // 이번 달 예산 가져오기
     useEffect(() => {
-        // 필요 시 yearMonth 쿼리 파라미터로 넘겨도 됨
-        const token = localStorage.getItem("accessToken");
-        fetch(`${apiBaseUrl}/myberry/budgets`, {
-            headers: {
-                Authorization: token ? `Bearer ${token}` : "",
-            },
-        })
-            .then(async (res) => {
-                if (!res.ok) throw new Error(await res.text());
-                return res.json();
-            })
-            .then((json) => setBudget(json.data as Budget))
+        fetchBudget()
+            .then((b) => setBudget(b))
             .catch((e) => console.error("budget fetch error:", e));
-    }, [apiBaseUrl]);
+    }, []);
 
-    // 모달 열릴 때 지난달 소비 합계 가져오기
-    useEffect(()=>{
-        if(!isModalOpen) return;
+    // 지난달 예산 가져오기 (모달 열릴 때)
+    useEffect(() => {
+        if (!isModalOpen) return;
 
         const d = new Date();
         d.setMonth(d.getMonth() - 1);
-        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,"0")}`;
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
-        const token = localStorage.getItem("accessToken");
-
-        fetch(`${apiBaseUrl}/myberry/budgets?yearMonth=${ym}`,{
-            headers:{Authorization : token ? `Bearer ${token}` : ""},
-        })
-            .then(async (res) => {
-                if(!res.ok) throw new Error(await res.text());
-                return res.json();
-            })
-            .then((json) => {
-                const total = json?.data?.amountSpent;
-                setLastMonthSpent(typeof total === "number" ? total : null);
-            })
-            .catch((err : unknown)=> {
-                console.error(
-                    "last-month fetch error:",
-                    err instanceof Error ? err.message : String(err)
-                );
+        fetchBudget(ym)
+            .then((b) =>
+                setLastMonthSpent(typeof b.amountSpent === "number" ? b.amountSpent : null),
+            )
+            .catch((err) => {
+                console.error("last-month fetch error:", err);
                 setLastMonthSpent(null);
             });
-    },[isModalOpen, apiBaseUrl]);
+    }, [isModalOpen]);
 
     // 설정 아이콘 누르면 이동하는 설정 페이지
     const goSettings = () => {
@@ -236,7 +187,6 @@ const MyBerryPage: React.FC<Props> = ({
                     }}
                 >
                     <BudgetGoalForm
-                        apiBaseUrl={apiBaseUrl}
                         initialTarget={budget?.amountTarget ?? 0}
                         lastMonthSpentHint={lastMonthSpent ?? undefined}
                         onSaved={handleFormSaved}
