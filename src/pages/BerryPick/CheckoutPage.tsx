@@ -63,7 +63,7 @@ const CheckoutPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <Header></Header>
+      <Header showBackButton={false} title={'베리픽'}></Header>
       {/* 가맹점 & 결제 금액 */}
       <CheckoutMerchantCard
         name={merchantName ?? '알 수 없는 가맹점'}
@@ -109,9 +109,11 @@ const CheckoutPage = () => {
 
       {/* 결제하기 버튼 */}
       <div
-        style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}
+        style={{ marginTop: '20px', justifyContent: 'center' }}
+        //  , display: 'flex',
       >
-        <Button fullWidth variant="purple" onClick={() => setShowModal(true)}>
+        <Button onClick={() => setShowModal(true)}>
+          {/* fullWidth variant="purple" */}
           결제하기
         </Button>
       </div>

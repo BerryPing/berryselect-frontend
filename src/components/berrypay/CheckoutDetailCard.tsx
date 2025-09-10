@@ -3,7 +3,7 @@ import styled from 'styled-components';
 const Wrapper = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 12px;
+  margin-top: 20px;
 `;
 
 const Card = styled.div`
@@ -19,6 +19,7 @@ const Header = styled.div`
   font-size: 15px;
   font-weight: 700;
   margin-bottom: 12px;
+  color: var(--theme-primary);
 `;
 
 const Row = styled.div`
