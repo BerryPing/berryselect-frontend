@@ -51,12 +51,13 @@ const Main = styled.main`
 const DefaultLayout: React.FC = () => {
     const location = useLocation();
     const isAuthPage = location.pathname.startsWith("/auth");
+    const isMyBerryPage = location.pathname.startsWith("/myberry");
     return (
         <ViewWrapper>
             <SmartphoneView>
                 <Main style={{
-                    paddingTop: isAuthPage ? 0 : "56px",
-                    paddingBottom: isAuthPage ? 0 : "69px",
+                    paddingTop: (isAuthPage||isMyBerryPage) ? 0 : "56px",
+                    paddingBottom: (isAuthPage||isMyBerryPage) ? 0 : "69px",
                 }}>
                     <Outlet />
                 </Main>
