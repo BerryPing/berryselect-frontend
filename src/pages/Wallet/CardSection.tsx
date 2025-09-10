@@ -1,4 +1,3 @@
-// src/pages/Wallet/CardSection.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SectionBox from "@/components/common/SectionBox";
 import CardItem from "@/components/wallet/CardItem";
@@ -100,6 +99,21 @@ function computeActiveIndex(container: HTMLDivElement): number {
     return bestIdx;
 }
 
+/** 같은 카테고리 그룹들을 병합(아이템 합치기) */
+function mergeGroups(groups: BenefitGroup[]): BenefitGroup[] {
+    const byKey = new Map<string, BenefitGroup>();
+    for (const g of groups) {
+        const key = normCat(g.category);
+        const ex = byKey.get(key);
+        if (!ex) {
+            byKey.set(key, { category: g.category, items: [...g.items] });
+        } else {
+            ex.items.push(...g.items);
+        }
+    }
+    return Array.from(byKey.values());
+}
+
 /* =============== Component =============== */
 export default function CardSection() {
     // 카드 목록
@@ -180,10 +194,11 @@ export default function CardSection() {
                 if (cancelled) return;
                 setBenefits(res);
 
-                // others의 실제 존재 카테고리(정규화 키)
-                const available = new Set((res.others ?? []).map((g) => normCat(g.category)));
+                // personalized + others 합쳐서 실제 존재 카테고리 산출
+                const merged = mergeGroups([...(res.personalized ?? []), ...(res.others ?? [])]);
+                const available = new Set(merged.map((g) => normCat(g.category)));
 
-                // 사용자 선호 중에서 실제 존재하는 첫 항목 찾기 → 마스터 라벨로 복원
+                // 사용자 선호 중 첫 매칭 카테고리 선택(없으면 '전체')
                 let next: MasterCat | undefined;
                 for (const c of settings?.preferredCategories ?? []) {
                     const key = normCat(c);
@@ -267,26 +282,30 @@ export default function CardSection() {
         setActiveIndex(computeActiveIndex(listRef.current));
     }, [cards.length]);
 
-    /* -------- "그 외 혜택" 가공 -------- */
-    const others = benefits?.others ?? [];
+    /* -------- “그 외 혜택” = 맞춤형 + 그외 전체를 대상 -------- */
+    const allGroups = useMemo<BenefitGroup[]>(() => {
+        const p = benefits?.personalized ?? [];
+        const o = benefits?.others ?? [];
+        return mergeGroups([...p, ...o]);
+    }, [benefits]);
 
-    // 정규화 키로 맵 구성
-    const othersByCat = useMemo(() => {
+    // 정규화 맵
+    const groupsByCat = useMemo(() => {
         const m = new Map<string, BenefitGroup>();
-        for (const g of others) m.set(normCat(g.category), g);
+        for (const g of allGroups) m.set(normCat(g.category), g);
         return m;
-    }, [others]);
+    }, [allGroups]);
 
     // 전체 탭: 모든 items 합치기
     const mergedAll = useMemo<BenefitGroup>(() => {
-        return { category: "전체", items: others.flatMap((g) => g.items) };
-    }, [others]);
+        return { category: "전체", items: allGroups.flatMap((g) => g.items) };
+    }, [allGroups]);
 
     // 선택된 탭의 그룹 계산(정규화 키 비교)
     const selectedGroup: BenefitGroup = useMemo(() => {
         if (activeOther === "전체") return mergedAll;
-        return othersByCat.get(normCat(activeOther)) ?? { category: activeOther, items: [] };
-    }, [activeOther, mergedAll, othersByCat]);
+        return groupsByCat.get(normCat(activeOther)) ?? { category: activeOther, items: [] };
+    }, [activeOther, mergedAll, groupsByCat]);
 
     return (
         <>
@@ -387,7 +406,7 @@ export default function CardSection() {
                                 return <GroupList groups={p} />;
                             })()}
 
-                            {/* ② 그 외 혜택 */}
+                            {/* ② 그 외 혜택 (맞춤형 포함 전부를 카테고리 필터링) */}
                             <div style={{ marginTop: 16 }}>
                                 <div className={styles.subSectionTitle}>그 외 혜택</div>
 
