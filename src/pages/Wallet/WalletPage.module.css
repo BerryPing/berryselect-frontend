@@ -10,10 +10,11 @@
 }
 
 /** ───────── 공통 섹션 타이틀 ───────── */
-.sectionTitle {
+.sectionTitle,
+.subSectionTitle {
     font-weight: 700;
     margin-bottom: 8px;
-    color: var(--theme-text);
+    color: var(--theme-primary);
 }
 
 /** ───────── 상태 텍스트 ───────── */
@@ -26,6 +27,7 @@
 .loading,
 .empty {
     color: var(--theme-light-gray);
+    font-size: 13px;
 }
 
 .error {
@@ -335,6 +337,7 @@
     gap: 8px;
     margin: 6px 0 8px;
 }
+
 .chip {
     height: 37px;
     padding: 12px 13px 11px;
@@ -345,8 +348,14 @@
     font-size: 13.6px;
     cursor: pointer;
 }
+
+.chip:hover {
+    background: var(--theme-bg);
+}
+
 .chipSelected {
-    border-color: #5F0080;
+    border-color: var(--theme-primary);
+    background: var(--theme-bg);
     color: #2D0F3F;
 }
 
@@ -354,6 +363,262 @@
    멤버십(Membership)
    ========================================================= */
 /** ───────── Membership ───────── */
+.previewCard{padding:8px 16px 12px;}
+.previewBarcodeWrap{display:flex;align-items:center;justify-content:center;width:100%;}
+.previewBarcodeCanvas{width:100%;height:96px;display:block;}
+
+.sectionTitle {
+    color: var(--theme-primary);
+    font-weight: 700;
+    font-size: 15.2px;
+    margin-bottom: 8px;
+}
+
+.subTitle {
+    color: var(--theme-primary);
+    font-weight: 700;
+    font-size: 15.2px;
+    margin: 16px 0 8px;
+}
+
+.loading {
+    color: var(--theme-primary);
+    text-align: center;
+    padding: 12px 0;
+    font-size: 13px;
+}
+
+.previewHero {
+    height: 280px;
+    border-radius: 28px;
+    margin: 8px 12px 12px;
+}
+
+.previewPoint {
+    margin-top: 6px;
+    font-weight: 700;
+    color: var(--theme-text);
+    font-size: 14px;
+    text-align: center;
+}
+
+.rowBetween {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rowStart {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.desc {
+    color: var(--theme-primary);
+    font-size: 12px;
+}
+
+.badgeOn {
+    background: #dcfce7;
+    color: #0f766e;
+    border-radius: 12px;
+    padding: 6px 8px;
+    font-size: 11.2px;
+    font-weight: 600;
+}
+
+.badgeOff {
+    background: #fef2f2;
+    color: #991b1b;
+    border-radius: 12px;
+    padding: 6px 8px;
+    font-size: 11.2px;
+    font-weight: 600;
+}
+
+.divider {
+    width: 100%;
+    height: 1px;
+    background: var(--theme-secondary);
+    margin: 10px 0 12px;
+}
+
+/* 캐러셀 */
+.carousel {
+    overflow-x: auto;
+    display: flex;
+    gap: 16px;
+    scroll-snap-type: x mandatory;
+    padding: 8px 0 4px;
+}
+
+.carouselItem {
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+}
+
+.dots {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.dot,
+.dotActive {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--theme-secondary);
+}
+
+.dotActive {
+    width: 24px;
+    background: var(--theme-primary);
+}
+
+/* 바코드 카드 */
+.barcodeCard {
+    width: 100%;
+    height: 180px;
+    border: 1px solid var(--theme-secondary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+    background: #fafafa;
+}
+
+.barcode {
+    width: 78%;
+    height: 80px;
+    background: repeating-linear-gradient(
+            to right,
+            #111,
+            #111 2px,
+            transparent 2px,
+            transparent 6px
+    );
+    border-radius: 12px;
+}
+
+.barcodeNumber {
+    margin-top: 8px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 12.8px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 12px;
+}
+
+.tile {
+    border: 1px solid var(--theme-secondary);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.tileIcon {
+    width: 28px;
+    height: 28px;
+    background: #f3f4f6;
+    border-radius: 8px;
+}
+
+.tileName {
+    font-size: 13.2px;
+    color: var(--theme-text);
+    font-weight: 600;
+}
+
+/* 인풋 */
+.input {
+    width: 100%;
+    height: 40px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    color: #111;
+    padding: 0 12px;
+    outline: none;
+    font-size: 14px;
+}
+
+.checkboxRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 4px;
+    font-size: 12.8px;
+    color: var(--theme-primary);
+}
+
+.helper {
+    color: #838383;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* 혜택 모달: 타이틀 여백 */
+.benefitTitle {
+    margin-top: 2px;
+}
+
+/* 섹션 리스트 */
+.sectionBlock {
+    display: flex;
+    margin-bottom: 12px;
+    align-items: flex-start;
+    color: var(--theme-primary);
+}
+
+/* 왼쪽 라벨 */
+.sectionLabel {
+    width: 60px;
+    font-weight: 700;
+    color: #333;
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--theme-primary);
+}
+
+/* 오른쪽 상세 내용 */
+.sectionUl {
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    font-size: 14px;
+    color: var(--theme-text);
+}
+
+.sectionLi {
+    line-height: 1.5;
+    color: #444;
+    list-style: none; /* 점 없애기 */
+    word-break: keep-all; /* 줄바꿈 깔끔하게 */
+}
+
+.sectionEmpty {
+    padding: 8px;
+    color: #666;
+}
+
+/* 간격 유틸 */
+.spacer12 {
+    height: 12px;
+}
+
+.spacer8 {
+    height: 8px;
+}
 
 /* =========================================================
    기프티콘(Gifticon)
