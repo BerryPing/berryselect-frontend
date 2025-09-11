@@ -166,7 +166,7 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                                 fontFamily: 'Roboto, sans-serif',
                                 padding: '0 2px',
                                 boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
-                                border: '2px solid white', // 배경과 구분되도록 테두리
+                                border: '2px solid white',
                                 zIndex: 10,
                                 maxWidth: 24,
                                 overflow: 'hidden',

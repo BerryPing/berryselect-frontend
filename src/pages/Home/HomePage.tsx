@@ -10,6 +10,7 @@ import type { TransactionDetailResponse } from "@/types/transaction";
 import { useNavigate } from 'react-router-dom';
 import {getUnreadNotificationCount, getNotifications} from "@/api/notificationApi.ts";
 import type {NotificationResponse} from "@/api/notificationApi.ts";
+import {fetchMyProfile, type UserProfile} from "@/api/myberryApi.ts";
 
 const HomePage = () => {
     const [searchValue, setSearchValue] = useState('');
@@ -22,6 +23,10 @@ const HomePage = () => {
 
     const [latestAlert, setLatestAlert] = useState<NotificationResponse | null>(null);
     const [alertLoading, setAlertLoading] = useState(true);
+
+    // 사용자 프로필 state 추가
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [profileLoading, setProfileLoading] = useState(true);
 
     const fetchLatestAlert = async () => {
         try {
@@ -48,6 +53,19 @@ const HomePage = () => {
     const handleAlertClick = () => {
         console.log('알림 카드 클릭됨');
         navigate('/wallet');
+    };
+
+    const fetchUserProfile = async () => {
+        try {
+            setProfileLoading(true);
+            const profile = await fetchMyProfile();
+            setUserProfile(profile);
+        } catch (error) {
+            console.error('사용자 프로필 조회 중 오류:', error);
+            setUserProfile(null);
+        } finally {
+            setProfileLoading(false);
+        }
     };
 
     // 읽지 않은 알림 개수 조회 함수
@@ -162,6 +180,7 @@ const HomePage = () => {
         fetchRecentTransactions();
         fetchUnreadCount();
         fetchLatestAlert();
+        fetchUserProfile();
     }, []);
 
     return (
@@ -175,7 +194,11 @@ const HomePage = () => {
             <div style={{ marginTop: '80px', padding: '16px' }}>
                 {/* 인사 카드 */}
                 <HomeGreetingCard
-                    userName="김베리"
+                    userName={
+                        profileLoading
+                            ? "로딩 중..."
+                            : (userProfile?.name || "베리 사용자")
+                    }
                     unreadCount={unreadNotificationCount}
                     onNotificationClick={() => {
                         navigate('/notification');
