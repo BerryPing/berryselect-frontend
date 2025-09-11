@@ -17,10 +17,12 @@ const BerryPickPage = () => {
   const [options, setOptions] = useState<Option[]>([]);
   const [merchantId, setMerchantId] = useState<number | null>(null);
   const [paidAmount, setPaidAmount] = useState<number | null>(null);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
 
   useEffect(() => {
     if (selectedMerchant) {
       setMerchantId(selectedMerchant.id);
+      setCategoryId(selectedMerchant.categoryId);
     }
   }, [selectedMerchant]);
 
@@ -53,6 +55,7 @@ const BerryPickPage = () => {
         optionId,
         merchantId,
         paidAmount,
+        categoryId,
 
         merchantName: selectedMerchant?.name,
         merchantAddress: selectedMerchant?.address,

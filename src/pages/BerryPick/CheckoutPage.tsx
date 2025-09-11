@@ -10,6 +10,10 @@ import AssetTabs from '@/components/wallet/AssetTabs';
 import type { AssetTab } from '@/components/wallet/AssetTabs';
 import type { Option, SessionResponse } from '@/types/reco';
 import Header from '@/components/layout/Header';
+import GifticonSection from '@/pages/Wallet/GifticonSection';
+import MembershipSection from '@/pages/Wallet/MembershipSection';
+import styles from '@/pages/BerryPick/CheckoutPage.module.css';
+import { CardPaymentBox } from '@/components/berrypay/DeepLinkCard';
 
 const CheckoutPage = () => {
   const location = useLocation();
@@ -20,6 +24,7 @@ const CheckoutPage = () => {
     merchantName,
     merchantAddress,
     paidAmount,
+    categoryId,
   } = location.state || {};
 
   const [showModal, setShowModal] = useState(false);
@@ -61,7 +66,8 @@ const CheckoutPage = () => {
         merchantId,
         paidAmount,
         sessionId,
-        optionId
+        optionId,
+        categoryId
       );
 
       console.log(`결제 성공 🎉: ${JSON.stringify(res.data, null, 2)}`);
@@ -126,29 +132,43 @@ const CheckoutPage = () => {
       </div>
 
       {/* ✅ 모달 */}
-      <Modal open={showModal} onClose={() => setShowModal(false)}>
-        <AssetTabs value={tab} onChange={setTab} />
-        <div style={{ marginTop: '16px' }}>
-          <Button fullWidth variant="purple" onClick={handlePayment}>
-            {labelForTab(tab)} 결제 진행
-          </Button>
-        </div>
-      </Modal>
+      <div className={styles.modalSheet}>
+        <Modal open={showModal} onClose={() => setShowModal(false)}>
+          <AssetTabs value={tab} onChange={setTab} />
+
+          <div className={styles.modalBody}>
+            <div className={styles.modalScroll}>
+              {tab === 'gifticon' && (
+                <div>
+                  <GifticonSection />
+                </div>
+              )}
+              {tab === 'membership' && (
+                <div className={styles.sectionBox}>
+                  <MembershipSection />
+                </div>
+              )}
+              {tab === 'card' && (
+                <div className={styles.sectionBox}>
+                  <div style={{ padding: '12px' }}>
+                    {' '}
+                    <CardPaymentBox />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ✅ 하단 고정 버튼 */}
+          <div style={{ marginTop: '16px' }}>
+            <Button variant="purple" onClick={handlePayment}>
+              결제 진행
+            </Button>
+          </div>
+        </Modal>
+      </div>
     </div>
   );
-};
-
-const labelForTab = (tab: AssetTab) => {
-  switch (tab) {
-    case 'card':
-      return '카드';
-    case 'membership':
-      return '멤버십';
-    case 'gifticon':
-      return '기프티콘';
-    default:
-      return '결제';
-  }
 };
 
 export default CheckoutPage;

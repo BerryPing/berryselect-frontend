@@ -33,7 +33,8 @@ export const recoApi = {
     merchantId: number,
     paidAmount: number,
     sessionId: number,
-    optionId: number
+    optionId: number,
+    categoryId: number
   ) =>
     http.post(
       '/transactions',
@@ -42,6 +43,7 @@ export const recoApi = {
         paidAmount,
         sessionId,
         optionId,
+        categoryId,
       },
       { headers: { 'X-USER-ID': DEFAULT_USER_ID } }
     ),
