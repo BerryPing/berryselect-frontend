@@ -11,7 +11,7 @@
 
 .page {
     min-height: 100vh;
-    background: linear-gradient(180deg, #f4efff 0%, #ffffff 45%);
+    background: var(--theme-bg);
     padding: 16px;
     box-sizing: border-box;
 }
@@ -107,7 +107,6 @@ line-height : 0;
     background: var(--card);
     border-radius: 16px;
     padding: 16px;
-    box-shadow: var(--shadow);
     border: 1px solid var(--theme-secondary);
 }
 .cardHead {
@@ -167,4 +166,5 @@ line-height : 0;
     background: #f7f4ff;
     padding: 10px 12px;
     border-radius: 12px;
+    text-align: center;
 }

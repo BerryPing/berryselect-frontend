@@ -10,6 +10,11 @@ import type { TransactionDetailResponse } from "@/types/transaction";
 import { useNavigate } from 'react-router-dom';
 import {getUnreadNotificationCount, getNotifications} from "@/api/notificationApi.ts";
 import type {NotificationResponse} from "@/api/notificationApi.ts";
+import {fetchMyProfile, type UserProfile} from "@/api/myberryApi.ts";
+import type {MonthlyReportData} from "@/types/report";
+import type {Budget} from "@/api/myberryApi.ts";
+import {getMonthlyReportData} from "@/api/reportApi.ts";
+import {fetchBudget} from "@/api/myberryApi.ts";
 
 const HomePage = () => {
     const [searchValue, setSearchValue] = useState('');
@@ -22,6 +27,121 @@ const HomePage = () => {
 
     const [latestAlert, setLatestAlert] = useState<NotificationResponse | null>(null);
     const [alertLoading, setAlertLoading] = useState(true);
+
+    // 사용자 프로필 state 추가
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [profileLoading, setProfileLoading] = useState(true);
+
+    const [reportData, setReportData] = useState<MonthlyReportData | null>(null);
+    const [budgetData, setBudgetData] = useState<Budget | null>(null);
+    const [statsLoading, setStatsLoading] = useState(true);
+    const [statsError, setStatsError] = useState<string | null>(null);
+
+    // 현재 년월 계산
+    const getCurrentYearMonth = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
+    };
+
+    // StatItem용 데이터 생성
+    const generateStatsData = () => {
+        if (statsLoading) {
+            return [
+                { value: '로딩중...', label: '이번 달\n절감금액', color: 'var(--theme-text-light, #9B4DCC)' },
+                { value: '로딩중...', label: '추천\n사용률', color: 'var(--theme-text-light, #9B4DCC)' },
+                { value: '로딩중...', label: '이번 달\n잔여예산', color: 'var(--theme-text-light, #9B4DCC)' }
+            ];
+        }
+
+        if (statsError || (!reportData && !budgetData)) {
+            return [
+                { value: '오류', label: '이번 달\n절감금액', color: 'var(--theme-text-light, #9B4DCC)' },
+                { value: '오류', label: '추천\n사용률', color: 'var(--theme-text-light, #9B4DCC)' },
+                { value: '오류', label: '이번 달\n잔여예산', color: 'var(--theme-text-light, #9B4DCC)' }
+            ];
+        }
+
+        // 1. 절감금액
+        const savedAmount = reportData?.totalSaved || 0;
+        const savedAmountText = savedAmount > 0
+            ? `+${savedAmount.toLocaleString()}원`
+            : savedAmount < 0
+                ? `${savedAmount.toLocaleString()}원`
+                : '0원';
+        const savedAmountColor = savedAmount > 0
+            ? 'var(--theme-text-green, #059669)'
+            : savedAmount < 0
+                ? 'var(--theme-text-red, #DC2626)'
+                : 'var(--theme-text, #3C1053)';
+
+        // 2. 추천 사용률
+        const usageRate = reportData?.recommendationUsageRate || 0;
+        const usageRateText = `${Math.round(usageRate * 100)}%`;
+
+        // 3. 잔여예산
+        const remainingAmount = budgetData?.amountRemaining || 0;
+        const remainingAmountText = remainingAmount > 0
+            ? `${remainingAmount.toLocaleString()}원`
+            : remainingAmount < 0
+                ? `${Math.abs(remainingAmount).toLocaleString()}원 초과`
+                : '0원';
+        const remainingAmountColor = remainingAmount > 0
+            ? 'var(--theme-text, #3C1053)'
+            : remainingAmount < 0
+                ? 'var(--theme-text-red, #DC2626)'
+                : 'var(--theme-text-light, #9B4DCC)';
+
+        return [
+            {
+                value: savedAmountText,
+                label: '이번 달\n절감금액',
+                color: savedAmountColor
+            },
+            {
+                value: usageRateText,
+                label: '추천\n사용률',
+                color: 'var(--theme-primary, #5F0080)'
+            },
+            {
+                value: remainingAmountText,
+                label: '이번 달\n잔여예산',
+                color: remainingAmountColor
+            }
+        ];
+    };
+
+    // StatItem용 데이터 조회
+    const fetchStatsData = async () => {
+        try {
+            setStatsLoading(true);
+            setStatsError(null);
+
+            const currentYearMonth = getCurrentYearMonth();
+
+            // 병렬로 데이터 조회
+            const [reportResult, budgetResult] = await Promise.all([
+                getMonthlyReportData(currentYearMonth).catch(err => {
+                    console.warn('리포트 데이터 조회 실패:', err);
+                    return null;
+                }),
+                fetchBudget(currentYearMonth).catch(err => {
+                    console.warn('예산 데이터 조회 실패:', err);
+                    return null;
+                })
+            ]);
+
+            setReportData(reportResult);
+            setBudgetData(budgetResult);
+
+        } catch (error) {
+            console.error('StatItem 데이터 조회 실패:', error);
+            setStatsError('통계 데이터를 불러오는 중 오류가 발생했습니다.');
+        } finally {
+            setStatsLoading(false);
+        }
+    };
 
     const fetchLatestAlert = async () => {
         try {
@@ -48,6 +168,19 @@ const HomePage = () => {
     const handleAlertClick = () => {
         console.log('알림 카드 클릭됨');
         navigate('/wallet');
+    };
+
+    const fetchUserProfile = async () => {
+        try {
+            setProfileLoading(true);
+            const profile = await fetchMyProfile();
+            setUserProfile(profile);
+        } catch (error) {
+            console.error('사용자 프로필 조회 중 오류:', error);
+            setUserProfile(null);
+        } finally {
+            setProfileLoading(false);
+        }
     };
 
     // 읽지 않은 알림 개수 조회 함수
@@ -158,10 +291,16 @@ const HomePage = () => {
         fetchRecentTransactions();
     };
 
+    const handleGoalClick = () => {
+        navigate('/myberry');
+    };
+
     useEffect(() => {
         fetchRecentTransactions();
         fetchUnreadCount();
         fetchLatestAlert();
+        fetchUserProfile();
+        fetchStatsData();
     }, []);
 
     return (
@@ -175,7 +314,11 @@ const HomePage = () => {
             <div style={{ marginTop: '80px', padding: '16px' }}>
                 {/* 인사 카드 */}
                 <HomeGreetingCard
-                    userName="김베리"
+                    userName={
+                        profileLoading
+                            ? "로딩 중..."
+                            : (userProfile?.name || "베리 사용자")
+                    }
                     unreadCount={unreadNotificationCount}
                     onNotificationClick={() => {
                         navigate('/notification');
@@ -185,9 +328,8 @@ const HomePage = () => {
                 {/* 통계 카드 */}
                 <div style={{ marginTop: '16px' }}>
                     <StatItem
-                        onGoalClick={() => {
-                            navigate('/myberry')
-                        }}
+                        stats={generateStatsData()}
+                        onGoalClick={handleGoalClick}
                     />
                 </div>
 

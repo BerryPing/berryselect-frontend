@@ -12,7 +12,7 @@ interface HomeGreetingCardProps {
 }
 
 const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
-                                                               userName = '김베리',
+                                                               userName,
                                                                profileImage = berryLogo,
                                                                unreadCount = 0,
                                                                onCardClick,
@@ -27,7 +27,6 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                 height: 87,
                 position: 'relative',
                 background: 'var(--color-white-solid, white)',
-                boxShadow: '0px 8px 20px -12px rgba(0, 0, 0, 0.15)',
                 overflow: 'hidden',
                 borderRadius: 16,
                 outline: '1px var(--color-violet-89, #E5D5F0) solid',
@@ -166,7 +165,7 @@ const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                                 fontFamily: 'Roboto, sans-serif',
                                 padding: '0 2px',
                                 boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)',
-                                border: '2px solid white', // 배경과 구분되도록 테두리
+                                border: '2px solid white',
                                 zIndex: 10,
                                 maxWidth: 24,
                                 overflow: 'hidden',

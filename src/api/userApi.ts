@@ -40,11 +40,86 @@ export type UpdateUserSettingsRequest = {
     marketingOptIn?: boolean;
 };
 
+type BackendUserSettingsResponse = Partial<{
+    preferredCategories: string[];
+    allowKakaoAlert: boolean | null;
+    marketingOption: boolean | null;
+
+    // BE v1 스타일
+    notifyBudgetAlert: boolean | null;
+    notifyGifticonExpire: boolean | null;
+    notifyBenefitEvents: boolean | null;
+
+    // BE v0/FE 스타일
+    warnOverBudget: boolean | null;
+    gifticonExpireAlert: boolean | null;
+    eventAlert: boolean | null;
+}>;
+
+type BackendUpdateUserSettingsRequest = Partial<{
+    allowKakaoAlert: boolean;
+    marketingOption: boolean;
+
+    // 둘 다 실어보냄(백엔드가 어느 쪽을 바인딩하든 맞게 들어가도록)
+    notifyBudgetAlert: boolean;
+    notifyGifticonExpire: boolean;
+    notifyBenefitEvents: boolean;
+
+    warnOverBudget: boolean;
+    gifticonExpireAlert: boolean;
+    eventAlert: boolean;
+
+    preferredCategories: string[];
+    preferredCategoryIds: number[];
+}>;
+
+const fromBackend = (be: BackendUserSettingsResponse): UserSettingsResponse => ({
+    preferredCategories: be.preferredCategories ?? [],
+    allowKakaoAlert: be.allowKakaoAlert ?? null,
+    marketingOptIn: be.marketingOption ?? null,
+
+    // 응답은 두 이름 중 존재하는 걸 채택
+    warnOverBudget: (be.notifyBudgetAlert ?? be.warnOverBudget) ?? null,
+    gifticonExpireAlert: (be.notifyGifticonExpire ?? be.gifticonExpireAlert) ?? null,
+    eventAlert: (be.notifyBenefitEvents ?? be.eventAlert) ?? null,
+});
+
+const toBackend = (ui: UpdateUserSettingsRequest): BackendUpdateUserSettingsRequest => {
+    const o: BackendUpdateUserSettingsRequest = {};
+    if (ui.allowKakaoAlert !== undefined) o.allowKakaoAlert = ui.allowKakaoAlert;
+    if (ui.marketingOptIn !== undefined) o.marketingOption = ui.marketingOptIn;
+
+    if (ui.warnOverBudget !== undefined) {
+        o.notifyBudgetAlert = ui.warnOverBudget;  // BE v1
+        o.warnOverBudget = ui.warnOverBudget;     // BE v0/FE
+    }
+    if (ui.gifticonExpireAlert !== undefined) {
+        o.notifyGifticonExpire = ui.gifticonExpireAlert;
+        o.gifticonExpireAlert = ui.gifticonExpireAlert;
+    }
+    if (ui.eventAlert !== undefined) {
+        o.notifyBenefitEvents = ui.eventAlert;
+        o.eventAlert = ui.eventAlert;
+    }
+
+    if (ui.preferredCategories) o.preferredCategories = ui.preferredCategories;
+    if (ui.preferredCategoryIds) o.preferredCategoryIds = ui.preferredCategoryIds;
+
+    return o;
+};
+
+function authHeader() {
+    const token = localStorage.getItem("accessToken");
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+}
+
 // GET /users/me/settings
 export async function getUserSettings(): Promise<UserSettingsResponse> {
     try {
-        const { data } = await api.get<UserSettingsResponse>("/users/me/settings");
-        return data;
+        const { data } = await api.get<BackendUserSettingsResponse>("/users/me/settings",
+            authHeader()
+        );
+        return fromBackend(data);
     } catch (err: unknown) {
         const status = isAxiosError(err) ? err.response?.status : undefined;
         console.warn("[getUserSettings] fallback due to error", status);
@@ -66,11 +141,11 @@ export async function updateUserSettings(
     const token = localStorage.getItem("accessToken");
     if (!token) throw new Error("로그인이 필요합니다.");
 
-    const { data } = await api.put<UserSettingsResponse>(
+    const { data } = await api.put<BackendUserSettingsResponse>(
         "/users/me/settings",
-        body,
+        toBackend(body),
         { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    return data;
+    return fromBackend(data);
 }
