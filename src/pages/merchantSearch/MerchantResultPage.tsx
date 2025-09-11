@@ -5,7 +5,7 @@ import { SearchHeader } from '@/components/merchants/SearchHeader'; // ✅ named
 import { MerchantList } from '@/components/merchants/MerchantList'; // ✅ default import
 
 const MerchantResultPage = () => {
-  const [keyword, setKeyword] = useState('스타벅스');
+  const [keyword, setKeyword] = useState('');
   const [merchants, setMerchants] = useState<Merchant[]>([]);
 
   const fetchMerchants = async () => {

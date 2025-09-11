@@ -1,11 +1,11 @@
-/* .modalBody {
+.modalBody {
   padding: 16px 16px 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 40vh; 
-   overflow: hidden;
-} */
+  max-height: 40vh;
+  overflow: hidden;
+}
 
 /* 스크롤 영역 */
 .modalScroll {
