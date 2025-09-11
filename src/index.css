@@ -87,3 +87,8 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.search-input::placeholder {
+  color: var(--theme-text-light) !important;
+  opacity: 1;
+}
