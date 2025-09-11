@@ -2,19 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SectionBox from "@/components/common/SectionBox";
 import CardItem from "@/components/wallet/CardItem";
 import berrylogo from "@/assets/imgs/berrylogo.png";
-import {
-    type CardSummary,
-    getCards,
-    getCardBenefits,
-    type CardBenefitsGrouped,
-    type BenefitGroup,
-    type BenefitItem,
-} from "@/api/walletApi";
+import { type CardSummary, getCards, getCardBenefits, type CardBenefitsGrouped, type BenefitGroup, type BenefitItem } from "@/api/walletApi";
 import styles from "./WalletPage.module.css";
 import Button from "@/components/common/Button.tsx";
 import { getCardImage, getCardMeta } from "@/components/wallet/CardCatalog.ts";
 import { openDeepLink } from "@/utils/deepLink.ts";
 import { getUserSettings, type UserSettingsResponse } from "@/api/userApi.ts";
+import Modal from "@/components/common/Modal.tsx";
+import { Info } from "lucide-react";
 
 /* -------------------- 공통 UI 셀 -------------------- */
 function BenefitItemRow({ item }: { item: BenefitItem }) {
@@ -55,107 +50,102 @@ function GroupList({ groups }: { groups: BenefitGroup[] }) {
 /* -------------------- 카테고리 칩 -------------------- */
 const MASTER_CATS = ["전체", "카페", "편의점", "교통", "쇼핑", "음식", "기타"] as const;
 type MasterCat = (typeof MASTER_CATS)[number];
+const catEmoji: Record<string, string> = { 전체:"🐾", 카페:"☕", 편의점:"🏪", 교통:"🚗", 쇼핑:"🛒", 음식:"🍽️", 기타:"✨" };
 
-const catEmoji: Record<string, string> = {
-    전체: "🐾",
-    카페: "☕",
-    편의점: "🏪",
-    교통: "🚗",
-    쇼핑: "🛒",
-    음식: "🍽️",
-    기타: "✨",
-};
-
-/** 카테고리 문자열 정규화 */
 const normCat = (s?: string) =>
-    (s ?? "")
-        .normalize("NFKC")
-        .replace(/[^\p{L}\p{N}]+/gu, "")
-        .toLowerCase();
+    (s ?? "").normalize("NFKC").replace(/[^\p{L}\p{N}]+/gu, "").toLowerCase();
 
-/** "카페"처럼 마스터 라벨을 정규화 키로 역매핑 */
 const MASTER_NORM_MAP = new Map<string, MasterCat>(
     (MASTER_CATS as readonly string[]).map((c) => [normCat(c), c as MasterCat])
 );
 
-/* =============== Utils =============== */
+/* --------- Helpers --------- */
 function computeActiveIndex(container: HTMLDivElement): number {
     const cards = Array.from(container.querySelectorAll<HTMLDivElement>('[data-card-slot="1"]'));
     if (cards.length === 0) return 0;
     const containerRect = container.getBoundingClientRect();
     const containerCenter = containerRect.left + containerRect.width / 2;
 
-    let bestIdx = 0;
-    let bestDist = Number.POSITIVE_INFINITY;
+    let bestIdx = 0; let bestDist = Number.POSITIVE_INFINITY;
     cards.forEach((el, idx) => {
         const r = el.getBoundingClientRect();
         const center = r.left + r.width / 2;
         const dist = Math.abs(center - containerCenter);
-        if (dist < bestDist) {
-            bestDist = dist;
-            bestIdx = idx;
-        }
+        if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
     });
     return bestIdx;
 }
 
-/** 같은 카테고리 그룹들을 병합(아이템 합치기) */
 function mergeGroups(groups: BenefitGroup[]): BenefitGroup[] {
     const byKey = new Map<string, BenefitGroup>();
     for (const g of groups) {
         const key = normCat(g.category);
         const ex = byKey.get(key);
-        if (!ex) {
-            byKey.set(key, { category: g.category, items: [...g.items] });
-        } else {
-            ex.items.push(...g.items);
-        }
+        if (!ex) byKey.set(key, { category: g.category, items: [...g.items] });
+        else ex.items.push(...g.items);
     }
     return Array.from(byKey.values());
 }
 
+/* ================= 실적/구간 계산 유틸 ================= */
+type Tier = { label: string; min: number; max: number | null };
+type CardSummaryExt = CardSummary & { prevMonthSpend?: number };
+type BenefitsExt = CardBenefitsGrouped & { spendTiers?: Tier[]; benefitNoteHtml?: string };
+
+function isTierArray(v: unknown): v is Tier[] {
+    return Array.isArray(v) && v.every(
+        (t) => t && typeof t === "object" &&
+            typeof (t as Tier).label === "string" &&
+            typeof (t as Tier).min === "number" &&
+            ("max" in (t as Tier))
+    );
+}
+const DEFAULT_TIERS: Tier[] = [
+    { label: "0구간", min: 0, max: 200_000 },
+    { label: "1구간", min: 200_000, max: 500_000 },
+    { label: "2구간", min: 500_000, max: null },
+];
+function findTier(spend: number, tiers: Tier[]) {
+    const idx = tiers.findIndex((t) => (t.max == null ? spend >= t.min : spend >= t.min && spend < t.max));
+    return idx >= 0 ? idx : tiers.length - 1;
+}
+function formatMoney(n: number) { return n.toLocaleString("ko-KR") + "원"; }
+
 /* =============== Component =============== */
 export default function CardSection() {
-    // 카드 목록
     const [cards, setCards] = useState<CardSummary[]>([]);
     const [loadingCards, setLoadingCards] = useState(false);
     const [cardsError, setCardsError] = useState<string | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
 
-    // 활성 카드
     const [activeIndex, setActiveIndex] = useState(0);
     const activeCard = cards[activeIndex];
 
-    // 혜택/개인화
     const [benefits, setBenefits] = useState<CardBenefitsGrouped | null>(null);
     const [loadingBenefits, setLoadingBenefits] = useState(false);
     const [benefitsError, setBenefitsError] = useState<string | null>(null);
     const [activeOther, setActiveOther] = useState<MasterCat>("전체");
 
-    // 사용자 설정
     const [settings, setSettings] = useState<UserSettingsResponse | null>(null);
     const [loadingSettings, setLoadingSettings] = useState(false);
+
+    const [openPerfModal, setOpenPerfModal] = useState(false);
 
     /* 1) 카드 목록 */
     useEffect(() => {
         let cancelled = false;
         (async () => {
             try {
-                setLoadingCards(true);
-                setCardsError(null);
+                setLoadingCards(true); setCardsError(null);
                 const list = await getCards();
-                if (cancelled) return;
-                setCards(list);
-                setActiveIndex(0);
+                if (!cancelled) { setCards(list); setActiveIndex(0); }
             } catch {
                 if (!cancelled) setCardsError("카드 목록을 불러오지 못했습니다.");
             } finally {
                 if (!cancelled) setLoadingCards(false);
             }
         })();
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, []);
 
     /* 2) 사용자 설정 */
@@ -172,42 +162,29 @@ export default function CardSection() {
                 if (!cancelled) setLoadingSettings(false);
             }
         })();
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, []);
 
-    /* 3) 혜택 로드 (카드 변경/설정 변경 시) */
+    /* 3) 혜택 로드 */
     useEffect(() => {
-        if (!activeCard?.cardId) {
-            setBenefits(null);
-            setActiveOther("전체");
-            return;
-        }
-
+        if (!activeCard?.cardId) { setBenefits(null); setActiveOther("전체"); return; }
         let cancelled = false;
-        setLoadingBenefits(true);
-        setBenefitsError(null);
+        setLoadingBenefits(true); setBenefitsError(null);
 
         getCardBenefits(activeCard.cardId)
             .then((res) => {
                 if (cancelled) return;
                 setBenefits(res);
 
-                // personalized + others 합쳐서 실제 존재 카테고리 산출
                 const merged = mergeGroups([...(res.personalized ?? []), ...(res.others ?? [])]);
                 const available = new Set(merged.map((g) => normCat(g.category)));
 
-                // 사용자 선호 중 첫 매칭 카테고리 선택(없으면 '전체')
                 let next: MasterCat | undefined;
                 for (const c of settings?.preferredCategories ?? []) {
                     const key = normCat(c);
                     if (available.has(key)) {
                         const mapped = MASTER_NORM_MAP.get(key);
-                        if (mapped) {
-                            next = mapped;
-                            break;
-                        }
+                        if (mapped) { next = mapped; break; }
                     }
                 }
                 setActiveOther(next ?? "전체");
@@ -217,13 +194,9 @@ export default function CardSection() {
                 const msg = e instanceof Error ? e.message : "혜택을 불러오지 못했습니다.";
                 setBenefitsError(msg);
             })
-            .finally(() => {
-                if (!cancelled) setLoadingBenefits(false);
-            });
+            .finally(() => { if (!cancelled) setLoadingBenefits(false); });
 
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, [activeCard?.cardId, settings?.preferredCategories]);
 
     /* 4) 가로 스크롤 활성 카드 추적 */
@@ -238,13 +211,15 @@ export default function CardSection() {
         });
     }, []);
     useEffect(() => {
-        const el = listRef.current;
-        if (!el) return;
+        const el = listRef.current; if (!el) return;
         el.addEventListener("scroll", onScroll, { passive: true });
         return () => el.removeEventListener("scroll", onScroll);
     }, [onScroll]);
+    useEffect(() => {
+        if (!listRef.current || cards.length === 0) return;
+        setActiveIndex(computeActiveIndex(listRef.current));
+    }, [cards.length]);
 
-    /* 카드 표시 이름 */
     const cardDisplayName = (c: CardSummary): string => {
         if (c.name) return c.name;
         const issuer = c.issuer ?? "카드";
@@ -252,60 +227,61 @@ export default function CardSection() {
         return `${issuer}${last4}`;
     };
 
-    /* 카드 클릭 → 중앙 정렬 */
     const handleSelectCard = (cardId?: number) => {
         if (!cardId || !listRef.current) return;
         const idx = cards.findIndex((c) => c.cardId === cardId);
-        if (idx < 0) return;
-        setActiveIndex(idx);
+        if (idx < 0) return; setActiveIndex(idx);
 
         const container = listRef.current;
         const slots = container.querySelectorAll<HTMLDivElement>('[data-card-slot="1"]');
-        const target = slots[idx];
-        if (!target) return;
+        const target = slots[idx]; if (!target) return;
 
         const containerRect = container.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
         const containerCenter = container.scrollLeft + container.clientWidth / 2;
-        const targetCenter =
-            container.scrollLeft + (targetRect.left - containerRect.left) + targetRect.width / 2;
+        const targetCenter = container.scrollLeft + (targetRect.left - containerRect.left) + targetRect.width / 2;
 
-        container.scrollTo({
-            left: container.scrollLeft + (targetCenter - containerCenter),
-            behavior: "smooth",
-        });
+        container.scrollTo({ left: container.scrollLeft + (targetCenter - containerCenter), behavior: "smooth" });
     };
 
-    /* 최초 렌더 후 보정 */
-    useEffect(() => {
-        if (!listRef.current || cards.length === 0) return;
-        setActiveIndex(computeActiveIndex(listRef.current));
-    }, [cards.length]);
-
-    /* -------- “그 외 혜택” = 맞춤형 + 그외 전체를 대상 -------- */
+    /* -------- “그 외 혜택” = 맞춤형 + 그외 전체 ------- */
     const allGroups = useMemo<BenefitGroup[]>(() => {
-        const p = benefits?.personalized ?? [];
-        const o = benefits?.others ?? [];
+        const p = benefits?.personalized ?? []; const o = benefits?.others ?? [];
         return mergeGroups([...p, ...o]);
     }, [benefits]);
 
-    // 정규화 맵
     const groupsByCat = useMemo(() => {
-        const m = new Map<string, BenefitGroup>();
-        for (const g of allGroups) m.set(normCat(g.category), g);
-        return m;
+        const m = new Map<string, BenefitGroup>(); for (const g of allGroups) m.set(normCat(g.category), g); return m;
     }, [allGroups]);
 
-    // 전체 탭: 모든 items 합치기
-    const mergedAll = useMemo<BenefitGroup>(() => {
-        return { category: "전체", items: allGroups.flatMap((g) => g.items) };
-    }, [allGroups]);
+    const mergedAll = useMemo<BenefitGroup>(() => ({ category: "전체", items: allGroups.flatMap((g) => g.items) }), [allGroups]);
 
-    // 선택된 탭의 그룹 계산(정규화 키 비교)
     const selectedGroup: BenefitGroup = useMemo(() => {
         if (activeOther === "전체") return mergedAll;
         return groupsByCat.get(normCat(activeOther)) ?? { category: activeOther, items: [] };
     }, [activeOther, mergedAll, groupsByCat]);
+
+    /* =============== 총 실적/구간(모달) =============== */
+    const thisMonthSpend = Math.max(0, Number(activeCard?.thisMonthSpend ?? 420_000)); // 예시 기본값
+    const prevMonthSpend = Math.max(0, Number((activeCard as CardSummaryExt)?.prevMonthSpend ?? 380_000)); // 예시 기본값
+
+    const tiersFromApi = (benefits as BenefitsExt | null)?.spendTiers;
+    const TIERS: Tier[] = isTierArray(tiersFromApi) && tiersFromApi.length > 0 ? tiersFromApi : DEFAULT_TIERS;
+    const tierIdx = findTier(prevMonthSpend, TIERS);
+    const currTier = TIERS[tierIdx];
+    const nextTier = TIERS[tierIdx + 1];
+    const needToNext = nextTier?.min != null ? Math.max(0, nextTier.min - prevMonthSpend) : 0;
+
+    const meterMax = currTier?.max ?? 1_000_000;
+    const meterPct = Math.min(100, (thisMonthSpend / meterMax) * 100);
+
+    const barRatio = (() => {
+        if (!currTier) return 0;
+        if (currTier.max == null) return 1;
+        const span = currTier.max - currTier.min;
+        const pos = Math.min(currTier.max, Math.max(currTier.min, prevMonthSpend)) - currTier.min;
+        return Math.max(0, Math.min(1, pos / span));
+    })();
 
     return (
         <>
@@ -357,23 +333,37 @@ export default function CardSection() {
                 </Button>
             </div>
 
-            {/* 이번 달 현황(더미) */}
+            {/* 이번 달 현황 */}
             <SectionBox width={352} padding="16px" outlined shadow={false}>
                 <div className={styles.statusCardWrap}>
                     <div className={styles.statusTitle}>이번 달 현황</div>
                     <div className={styles.statusRow}>
+                        {/* 총 실적 */}
                         <div className={styles.statusCard}>
-                            <div className={styles.statusLabel}>총 실적</div>
-                            <div className={styles.statusValue}>42/100만원</div>
+                            <div className={styles.statusHeader}>
+                                <div className={styles.statusLabel}>총 실적</div>
+                                <Info
+                                    type="button"
+                                    className={styles.infoBtn}
+                                    aria-label="실적 상세 보기"
+                                    onClick={() => setOpenPerfModal(true)}
+                                >
+                                </Info>
+                            </div>
+                            <div className={styles.statusValue}>
+                                {Math.floor(thisMonthSpend / 10_000)}/{Math.floor(meterMax / 10_000)}만원
+                            </div>
                             <div className={styles.statusMeter}>
-                                <div className={styles.statusMeterFill} />
+                                <div className={styles.statusMeterFill} style={{ width: `${meterPct}%` }} />
                             </div>
                         </div>
+
+                        {/* 잔여 예산 */}
                         <div className={styles.budgetCard}>
                             <div className={styles.budgetLabel}>잔여 예산</div>
                             <div className={styles.budgetValue}>120,000원</div>
                             <div className={styles.budgetMeter}>
-                                <div className={styles.budgetMeterFill} />
+                                <div className={styles.budgetMeterFill} style={{ width: "62%" }} />
                             </div>
                         </div>
                     </div>
@@ -406,11 +396,9 @@ export default function CardSection() {
                                 return <GroupList groups={p} />;
                             })()}
 
-                            {/* ② 그 외 혜택 (맞춤형 포함 전부를 카테고리 필터링) */}
+                            {/* ② 그 외 혜택 */}
                             <div style={{ marginTop: 16 }}>
                                 <div className={styles.subSectionTitle}>그 외 혜택</div>
-
-                                {/* 칩: 고정 순서(전체 포함) */}
                                 <div className={styles.chipsRow}>
                                     {MASTER_CATS.map((cat) => {
                                         const selected = cat === activeOther;
@@ -421,15 +409,14 @@ export default function CardSection() {
                                                 className={[styles.chip, selected ? styles.chipSelected : ""].join(" ")}
                                                 onClick={() => setActiveOther(cat)}
                                                 aria-pressed={selected}
+                                                title={catEmoji[cat] + " " + cat}
                                             >
-                                                <span className={styles.chipIcon}>{catEmoji[cat] ?? "•"}</span>
-                                                <span className={styles.chipLabel}>{cat}</span>
+                                                {cat}
                                             </button>
                                         );
                                     })}
                                 </div>
 
-                                {/* 선택된 탭 내용 */}
                                 {selectedGroup.items.length > 0 ? (
                                     <div className={styles.groupBlock}>
                                         <div className={styles.groupTitle}>{selectedGroup.category}</div>
@@ -447,6 +434,78 @@ export default function CardSection() {
                     )}
                 </div>
             </SectionBox>
+
+            {/* ===== 실적 모달 ===== */}
+            <Modal open={openPerfModal} onClose={() => setOpenPerfModal(false)}>
+                <div className={styles.modalSheet}>
+                    {/* 상단 핸들 + 타이틀 */}
+                    <div className={styles.modalHandle} />
+                    <div className={styles.modalHeader}>
+                        <div className={styles.modalTitle}>카드 이용실적 · 혜택</div>
+                    </div>
+
+                    {/* [A] 실적 인정금액 타이틀 */}
+                    <div className={styles.progressTitle}>실적 인정금액</div>
+
+                    {/* [B] 상단 진행바 */}
+                    <div className={styles.tierProgressWrap}>
+                        <div className={styles.tierProgressRail}>
+                            <div
+                                className={styles.tierProgressFill}
+                                style={{ width: `${barRatio * 100}%` }}
+                            />
+                        </div>
+                        <div className={styles.tierLabels}>
+                            <span>0구간</span>
+                            <span>1구간</span>
+                            <span>2구간</span>
+                        </div>
+                    </div>
+
+                    {/* [C] 다음 구간 박스 */}
+                    <div className={styles.nextBox}>
+                        <div className={styles.nextInline}>
+                            <span className={styles.nextPrefix}>다음 구간 까지</span>
+                            <strong className={styles.nextAmount}>{formatMoney(needToNext)}</strong>
+                            <span className={styles.nextSuffix}>남았어요</span>
+                        </div>
+                    </div>
+
+                    {/* [D] 섹션 제목: 구간별 혜택 내용 */}
+                    <div className={styles.subSectionHeader}>구간별 혜택 내용</div>
+
+                    {/* [E] 구간 Pill */}
+                    <div className={styles.tierPills}>
+                        {TIERS.map((t, i) => {
+                            const selected = i === tierIdx;
+                            return (
+                                <button
+                                    key={t.label}
+                                    type="button"
+                                    className={[styles.tierPill, selected ? styles.tierPillActive : ""].join(" ")}
+                                >
+                                    {t.label.replace("구간", "")}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* [F] 혜택 설명 목록 */}
+                    <div className={styles.benefitBullets}>
+                        <div className={styles.bullet}>
+                            혜택 조건: 전월 실적 {currTier.min.toLocaleString()}원 이상 ~{" "}
+                            {currTier.max ? `${currTier.max.toLocaleString()}원 미만` : "상한 없음"}
+                        </div>
+                        <div className={styles.bullet}>카페·편의점 5% 할인</div>
+                        <div className={styles.bullet}>온라인 쇼핑 2% 적립</div>
+                        <div className={styles.bullet}>
+                            {nextTier
+                                ? `${nextTier.min.toLocaleString()}원 이상 사용 시 ${nextTier.label} 혜택이 열려요`
+                                : "최고 구간입니다!"}
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </>
     );
 }

@@ -1,4 +1,3 @@
-// src/api/walletApi.ts
 import http from "./http";
 
 /* =====================
@@ -16,12 +15,15 @@ export interface CardSummary {
     issuer?: string;
     last4?: string;
     thisMonthSpend?: number;
+    prevMonthSpend?: number;
     [key: string]: unknown;
 }
 
 export interface CardDetail extends CardSummary {
     [key: string]: unknown;
 }
+
+export type SpendTier = { label: string; min: number; max: number | null };
 
 type CardsEnvelope = {
     type: "CARD";
@@ -34,6 +36,8 @@ type CardsEnvelope = {
         issuer?: string;
         last4?: string;
         thisMonthSpend?: number;
+        prevMonthSpend?: number;
+        prev_month_Spend?: number;
         [key: string]: unknown;
     }>;
 };
@@ -73,6 +77,8 @@ export interface BenefitGroup {
 export interface CardBenefitsGrouped {
     personalized: BenefitGroup[];
     others: BenefitGroup[];
+    spendTiers?: SpendTier[];
+    benefitNoteHtml?: string;
 }
 
 /** GET /wallet/cards/{cardId} */
@@ -85,11 +91,29 @@ export async function getCardDetail(cardId: number | string): Promise<CardDetail
 export async function getCardBenefits(
     cardId: number | string
 ): Promise<CardBenefitsGrouped> {
-    const res = await http.get<CardBenefitsGrouped>(`/wallet/cards/${cardId}/benefits`);
-    return {
-        personalized: Array.isArray(res.data?.personalized) ? res.data.personalized : [],
-        others: Array.isArray(res.data?.others) ? res.data.others : [],
+    const res = await http.get<CardBenefitsGrouped & {
+        spend_tiers?: Array<{ label: string; min: number; max: number | null }>;
+        benefit_note_html?: string;
+    }>(`/wallet/cards/${cardId}/benefits`);
+
+    const data = res.data;
+    const normalized: CardBenefitsGrouped = {
+        personalized: Array.isArray(data.personalized) ? data.personalized : [],
+        others: Array.isArray(data.others) ? data.others : [],
     };
+
+    const tiers = (data.spendTiers ?? data.spend_tiers) as SpendTier[] | undefined;
+    if (Array.isArray(tiers)) {
+        normalized.spendTiers = tiers.map((t) => ({
+            label: String(t.label ?? ""),
+            min: Number(t.min ?? 0),
+            max: t.max == null ? null : Number(t.max),
+        }));
+    }
+    const note = (data.benefitNoteHtml ?? data.benefit_note_html) as string | undefined;
+    if (note) normalized.benefitNoteHtml = note;
+
+    return normalized;
 }
 
 /* =====================

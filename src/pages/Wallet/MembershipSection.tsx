@@ -7,7 +7,7 @@ import CardItem from "@/components/wallet/CardItem";
 import JsBarcode from "jsbarcode";
 import styles from "./WalletPage.module.css";
 import { getMemberships, getGifticons, createMembership, type Membership, type Gifticon } from "@/api/walletApi";
-import {  MEMBERSHIP_META, MEMBERSHIP_URL, TELCO_META, TELCO_URL, type TelcoLabel, MEMBERSHIP_BENEFITS } from "@/components/wallet/MembershipCatalog";
+import { MEMBERSHIP_META, MEMBERSHIP_URL, TELCO_META, TELCO_URL, type TelcoLabel, MEMBERSHIP_BENEFITS } from "@/components/wallet/MembershipCatalog";
 
 /* ---------------------------------------------
  * Local types
@@ -29,7 +29,7 @@ type CtxWithReset = CanvasRenderingContext2D & { reset?: () => void };
 
 /** 카탈로그 메타 안전 접근 */
 const MEMBERSHIP_META_MAP = MEMBERSHIP_META as Record<string, MembershipMeta>;
-const TELCO_META_MAP = TELCO_META as Record<TelcoLabel, { logoUrl?: string }>;
+const TELCO_META_MAP = TELCO_META as Record<TelcoLabel, { imgUrl?: string; logoUrl?: string }>;
 const BARCODE_HEIGHT = 64 as const;
 
 /* ---------------------------------------------
@@ -96,7 +96,7 @@ function normalizeProgramKey(name?: string): string | null {
     if (!name) return null;
     const t = name.trim().toUpperCase().replace(/\s+|-/g, "");
     if (t.includes("GS25")) return "GS&POINT";
-    if (t === "LPOINT" || t === "L.POINT") return "L.POINT"; // ← 오탈자 수정
+    if (t === "LPOINT" || t === "L.POINT") return "L.POINT";
     if (t.includes("엘포인트")) return "L.POINT";
     if (t.includes("해피포인트")) return "해피포인트";
     if (t.includes("OK") && (t.includes("캐쉬") || t.includes("캐시") || t.includes("CASH") || t.includes("CASHBAG")))
@@ -106,10 +106,9 @@ function normalizeProgramKey(name?: string): string | null {
     return Object.prototype.hasOwnProperty.call(MEMBERSHIP_META_MAP, name) ? name : null;
 }
 
-/* ===== 혜택 섹션 유틸: 카탈로그 양식 다양한 경우를 모두 수용 ===== */
+/* ===== 혜택 섹션 유틸 ===== */
 type BenefitSection = { label: string; lines: string[] };
 
-// 카탈로그 항목 후보 스키마(널/옵셔널 안전)
 type CatalogBenefit = {
     title?: string;
     brand?: string;
@@ -122,16 +121,12 @@ type CatalogBenefit = {
     notes?: string;
 };
 
-
-// 섹션 기반 형태
 type BenefitSectionsShape = {
     sections: { label: string; lines: string[] }[];
 };
 
-// 키: 프로그램명, 값: (섹션형 | 평면배열형)
 type BenefitsByKey = Record<string, BenefitSectionsShape | CatalogBenefit[]>;
 
-// 한 줄 요약 포맷
 const formatBenefitLine = (b: CatalogBenefit): string => {
     const parts: string[] = [];
     const left = b.brand ?? b.title ?? "혜택";
@@ -153,12 +148,10 @@ const formatBenefitLine = (b: CatalogBenefit): string => {
     return parts.join("");
 };
 
-/** MEMBERSHIP_BENEFITS */
 const buildBenefitSections = (programKey: string | null): BenefitSection[] => {
     if (!programKey) return [];
     const data = (MEMBERSHIP_BENEFITS as BenefitsByKey)[programKey];
 
-    // 케이스 1: 섹션 구조
     if (data && "sections" in data && Array.isArray(data.sections)) {
         return data.sections
             .map((s) => ({
@@ -167,13 +160,10 @@ const buildBenefitSections = (programKey: string | null): BenefitSection[] => {
             }))
             .filter((s) => s.lines.length > 0);
     }
-
-    // 케이스 2: 평면 배열
     if (Array.isArray(data)) {
         const lines = (data as CatalogBenefit[]).map(formatBenefitLine).filter(Boolean);
         return lines.length ? [{ label: "주요 혜택", lines }] : [];
     }
-
     return [];
 };
 
@@ -290,7 +280,7 @@ export default function MembershipSection() {
         }
     }, [loading, sortedMemberships.length, updateActiveIndex]);
 
-    /* ========= 바코드: 공통 규칙 + DPI 스케일 ========= */
+    /* ========= 바코드 ========= */
     const barcodeCode = useMemo(() => {
         const raw = (activeMembership?.membershipNumber ?? activeMembership?.externalNo ?? "") as string;
         const cleaned = raw.replace(/[\s-]/g, "");
@@ -390,7 +380,6 @@ export default function MembershipSection() {
         [benefitProgram],
     );
 
-    // direct 키 → 없으면 대소문자/공백/하이픈 무시해서 재탐색
     const benefitSections = useMemo(() => {
         if (!benefitKey) return [];
         const direct = buildBenefitSections(benefitKey);
@@ -432,16 +421,40 @@ export default function MembershipSection() {
                             onWheel={onWheel}
                         >
                             {sortedMemberships.map((m) => {
-                                const key = normalizeProgramKey(m.program ?? "");
-                                const meta = key ? MEMBERSHIP_META_MAP[key] : undefined;
+                                const program = m.program ?? "";
+                                const isTelco = isTelcoProgram(program);
 
-                                const raw = meta?.imgUrl ?? meta?.cardBg;
-                                const isImage = !!raw && /^(data:|https?:|\/\/)/i.test(raw);
-                                const isGradient = !!raw && /\bgradient\(/i.test(raw);
+                                let imageUrl: string | undefined;
+                                let bg = "linear-gradient(135deg,#e5e7eb,#d1d5db)";
+                                let logo: string | undefined;
 
-                                const imageUrl = isImage ? raw : undefined;
-                                const bg = isGradient ? raw : "linear-gradient(135deg,#e5e7eb,#d1d5db)";
-                                const logo = meta?.logoUrl;
+                                if (isTelco) {
+                                    // TELCO_META 사용
+                                    const label: TelcoLabel = program.includes("KT")
+                                        ? "KT"
+                                        : program.includes("SKT")
+                                            ? "SKT"
+                                            : ("LG U+" as TelcoLabel);
+
+                                    const tmeta = TELCO_META_MAP[label];
+                                    const raw = tmeta?.imgUrl;
+                                    const isImage = !!raw && /^(data:|https?:|\/\/)/i.test(raw);
+                                    // 통신사는 카드 배경 이미지만 주는 케이스가 많음
+                                    imageUrl = isImage ? raw : undefined;
+                                    logo = tmeta?.logoUrl;
+                                } else {
+                                    // 일반 멤버십은 기존 MEMBERSHIP_META 사용
+                                    const key = normalizeProgramKey(program);
+                                    const meta = key ? MEMBERSHIP_META_MAP[key] : undefined;
+
+                                    const raw = meta?.imgUrl ?? meta?.cardBg;
+                                    const isImage = !!raw && /^(data:|https?:|\/\/)/i.test(raw);
+                                    const isGradient = !!raw && /\bgradient\(/i.test(raw);
+
+                                    imageUrl = isImage ? raw : undefined;
+                                    bg = isGradient ? raw : bg;
+                                    logo = meta?.logoUrl;
+                                }
 
                                 return (
                                     <div key={m.membershipId} data-card-slot="1" className={styles.cardSlot}>
@@ -531,9 +544,7 @@ export default function MembershipSection() {
             <Modal open={openBenefit} onClose={() => setOpenBenefit(false)}>
                 {benefitKey && (
                     <>
-                        <div className={`${styles.subTitle} ${styles.benefitTitle}`}>
-                            {benefitKey} 혜택
-                        </div>
+                        <div className={`${styles.subTitle} ${styles.benefitTitle}`}>{benefitKey} 혜택</div>
 
                         <SectionBox>
                             {benefitSections.length > 0 ? (
@@ -550,9 +561,7 @@ export default function MembershipSection() {
                                     </div>
                                 ))
                             ) : (
-                                <div className={styles.sectionEmpty}>
-                                    혜택 정보가 아직 준비되지 않았어요.
-                                </div>
+                                <div className={styles.sectionEmpty}>혜택 정보가 아직 준비되지 않았어요.</div>
                             )}
                         </SectionBox>
 
@@ -581,9 +590,7 @@ export default function MembershipSection() {
                     통신사 선택
                 </div>
                 <div className={styles.helper} style={{ marginBottom: 8 }}>
-                    {anyTelcoLinked
-                        ? "이미 통신사 멤버십이 연동되어 있어 추가 연동은 불가합니다."
-                        : "하나의 통신사만 연동할 수 있어요."}
+                    {anyTelcoLinked ? "이미 통신사 멤버십이 연동되어 있어 추가 연동은 불가합니다." : "하나의 통신사만 연동할 수 있어요."}
                 </div>
                 <div className={styles.grid} style={{ marginBottom: 8 }}>
                     {(["KT", "SKT", "LG U+"] as TelcoLabel[]).map((c) => {
@@ -681,11 +688,7 @@ export default function MembershipSection() {
                     onChange={(e) => setMembershipNo(e.target.value)}
                 />
                 <label className={styles.checkboxRow}>
-                    <input
-                        type="checkbox"
-                        checked={membershipAgree}
-                        onChange={(e) => setMembershipAgree(e.target.checked)}
-                    />
+                    <input type="checkbox" checked={membershipAgree} onChange={(e) => setMembershipAgree(e.target.checked)} />
                     <span>
             <u>멤버십 번호 수집</u>에 동의합니다.
           </span>
