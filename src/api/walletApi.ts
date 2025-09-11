@@ -1,4 +1,5 @@
 import http from "./http";
+import type {Budget} from "@/api/myberryApi.ts";
 
 /* =====================
  * 공통 타입
@@ -8,6 +9,15 @@ export type GifticonStatus = "ACTIVE" | "USED" | "EXPIRED";
 /* =====================
  * Cards
  * ===================== */
+
+// 잔여 예산
+export async function fetchCardBudget(cardId: number, yearMonth?: string) {
+    const res = await http.get<Budget>(`/wallet/cards/${cardId}/budget`, {
+        params: yearMonth ? { yearMonth } : undefined,
+    });
+    return res.data;
+}
+
 export interface CardSummary {
     cardId: number;
     assetId?: number;
