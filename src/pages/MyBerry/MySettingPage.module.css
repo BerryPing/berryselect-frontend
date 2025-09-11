@@ -102,7 +102,10 @@
     outline: none;
     -webkit-tap-highlight-color: transparent;
     flex-shrink: 0; /* 정렬 안정화 */
+    border: none;
+    background-clip: padding-box;
 }
+.switch:focus { outline: none; }
 
 .switch[aria-checked="true"] {
     background: var(--theme-primary); /* ON */
@@ -128,4 +131,10 @@
 
 .switch[aria-checked="true"] .thumb {
     transform: translateX(var(--travel));
+}
+
+.errorText {
+    color: #c53030;
+    font-size: 12px;
+    margin: 4px 24px 0;
 }
