@@ -146,12 +146,13 @@
     margin-bottom: 72px;
 }
 .statusTitle {
-    position: absolute; left: 16px; top: 17px; width: 318px;
+    position: absolute; left: 16px; top: 17px; width: 318px; gap: 2px;
     color: var(--theme-primary); font-size: 15.2px; font-weight: 700;
 }
 .statusRow {
-    position: absolute; left: 17px; top: 57px; width: 318px; height: 85px;
-    display: inline-flex; justify-content: center; align-items: flex-start; gap: 12px;
+    position: absolute; left: 17px; top: 57px; width: 318px; height: auto;
+    display: inline-flex; justify-content: center;
+    min-height: 110px;
 }
 
 /* 좌: 총 실적 카드 */
@@ -162,6 +163,7 @@
     outline: 1px solid var(--theme-secondary);
     outline-offset: -1px;
     padding: 13px;
+    margin-bottom: 23px;
 }
 .statusHeader { position: relative; height: 20px; }
 .statusLabel {
@@ -206,16 +208,18 @@
     background: var(--theme-bg); border-radius: 12px;
     outline: 1px solid var(--theme-secondary); outline-offset: -1px;
     display: inline-flex; flex-direction: column; gap: 4px;
+    margin-left: 15px;
+    margin-bottom: 23px;
 }
-.budgetLabel { color: var(--theme-text-light); font-size: 12px; }
-.budgetValue { color: var(--theme-text); font-size: 14.4px; font-weight: 700; }
+.budgetLabel { color: var(--theme-primary); font-size: 12px; }
+.budgetValue { color: var(--theme-primary); font-size: 14.4px; font-weight: 700; }
 .budgetMeter {
     position: relative; width: 100%; height: 6.3px;
-    background: var(--theme-secondary); overflow: hidden; border-radius: 3px;
+    background: var(--theme-primary); overflow: hidden; border-radius: 3px;
 }
 .budgetMeterFill {
     position: absolute; left: 0; top: 0; height: 100%;
-    background: var(--theme-text-green); border-radius: 3px;
+    background: var(--theme-primary); border-radius: 3px;
 }
 
 /** ───────── 혜택 리스트 / 칩 ───────── */
@@ -234,10 +238,55 @@
     display: flex; align-items: center; justify-content: center;
     color: var(--theme-primary); font-size: 12.8px; font-weight: 700; flex-shrink: 0;
 }
+.budgetSub{
+    color: var(--theme-primary);
+}
 .benefitTexts { display: flex; flex-direction: column; gap: 2px; }
 .benefitBrand { color: var(--theme-text); font-size: 14.4px; font-weight: 700; }
 .benefitTitle { color: var(--theme-text-light); font-size: 12px; font-weight: 400; }
 .benefitSubtle { color: var(--theme-text-sub); font-size: 11px; }
+
+/* ==== Progress Bar ==== */
+/* Track */
+/* ==== Progress Bar (피그마) ==== */
+
+/* 트랙 */
+.budgetBarTrackFx {
+    display: block;             /* ← 눈에 보이도록 확실히 */
+    width: 100%;
+    height: 6px;                /* h-1.5 */
+    background: #E7E2FF;        /* violet-89 */
+    border-radius: 3px;         /* rounded-[3px] */
+    overflow: hidden;
+    margin-top: 2px;            /* 숫자 아래 간격 */
+}
+
+/* 채움 */
+.budgetBarFillFx {
+    height: 100%;
+    width: 0;                   /* JS로 width% 지정 */
+    background: #FD9F28;        /* spring-green-30 */
+    border-radius: 3px;
+    transition: width 220ms ease;
+}
+
+/* 초과(경고색) */
+.budgetBarFillOverFx {
+    background: #FF6B6B;
+}
+
+/* 값 색상 초과 */
+.budgetOverFx {
+    color: #B00020;
+}
+
+/* 보조 텍스트 */
+.budgetMetaFx {
+    margin-top: 6px;
+    color: #6B7280;
+    font-size: 12px;
+    line-height: 16px;
+}
 
 /* '그 외 혜택' 카테고리 칩 */
 .chipsRow { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 8px; }

@@ -6,19 +6,19 @@ import berrylogo from "@/assets/imgs/berrylogo.png";
 import {
     type CardSummary,
     getCards,
-    getCardBenefits,
     type CardBenefitsGrouped,
     type BenefitGroup,
     type BenefitItem,
+    getCardBenefits,
 } from "@/api/walletApi";
 import styles from "./WalletPage.module.css";
-import Button from "@/components/common/Button.tsx";
-import { getCardImage, getCardMeta } from "@/components/wallet/CardCatalog.ts";
-import { openDeepLink } from "@/utils/deepLink.ts";
-import { getUserSettings, type UserSettingsResponse } from "@/api/userApi.ts";
-import Modal from "@/components/common/Modal.tsx";
+import Button from "@/components/common/Button";
+import { getCardImage, getCardMeta } from "@/components/wallet/CardCatalog";
+import { openDeepLink } from "@/utils/deepLink";
+import Modal from "@/components/common/Modal";
 import { Info } from "lucide-react";
-import { fetchBudget, type Budget } from "@/api/myberryApi.ts";
+import { fetchBudget, type Budget } from "@/api/myberryApi";
+import BerryPickPage from "@/pages/BerryPick/BerryPickPage.tsx";
 
 /* -------------------- 공통 UI 셀 -------------------- */
 function BenefitItemRow({ item }: { item: BenefitItem }) {
@@ -59,22 +59,9 @@ function GroupList({ groups }: { groups: BenefitGroup[] }) {
 /* -------------------- 카테고리 칩 -------------------- */
 const MASTER_CATS = ["전체", "카페", "편의점", "교통", "쇼핑", "음식", "기타"] as const;
 type MasterCat = (typeof MASTER_CATS)[number];
-const catEmoji: Record<string, string> = {
-    전체: "🐾",
-    카페: "☕",
-    편의점: "🏪",
-    교통: "🚗",
-    쇼핑: "🛒",
-    음식: "🍽️",
-    기타: "✨",
-};
 
 const normCat = (s?: string) =>
     (s ?? "").normalize("NFKC").replace(/[^\p{L}\p{N}]+/gu, "").toLowerCase();
-
-const MASTER_NORM_MAP = new Map<string, MasterCat>(
-    (MASTER_CATS as readonly string[]).map((c) => [normCat(c), c as MasterCat]),
-);
 
 /* --------- Helpers --------- */
 function computeActiveIndex(container: HTMLDivElement): number {
@@ -132,9 +119,7 @@ const DEFAULT_TIERS: Tier[] = [
     { label: "2구간", min: 500_000, max: null },
 ];
 function findTier(spend: number, tiers: Tier[]) {
-    const idx = tiers.findIndex((t) =>
-        t.max == null ? spend >= t.min : spend >= t.min && spend < t.max,
-    );
+    const idx = tiers.findIndex((t) => (t.max == null ? spend >= t.min : spend >= t.min && spend < t.max));
     return idx >= 0 ? idx : tiers.length - 1;
 }
 function formatMoney(n: number) {
@@ -156,14 +141,14 @@ export default function CardSection() {
     const [benefitsError, setBenefitsError] = useState<string | null>(null);
     const [activeOther, setActiveOther] = useState<MasterCat>("전체");
 
-    const [settings, setSettings] = useState<UserSettingsResponse | null>(null);
-    const [loadingSettings, setLoadingSettings] = useState(false);
-
     const [openPerfModal, setOpenPerfModal] = useState(false);
+
+    // ✅ BerryPickPage 표시용 상태
+    const [showBerryPick, setShowBerryPick] = useState(false);
 
     const fetchedBudgetRef = useRef(false);
 
-    // === 추가: 전체 월 예산(MyBerry) ===
+    // === 전체 월 예산(MyBerry) ===
     const [budget, setBudget] = useState<Budget | null>(null);
 
     /* 1) 카드 목록 */
@@ -207,61 +192,38 @@ export default function CardSection() {
         })();
     }, []);
 
-    /* 2) 사용자 설정 */
+    /* 2) 혜택 로드 */
     useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                setLoadingSettings(true);
-                const s = await getUserSettings();
-                if (!cancelled) setSettings(s);
-            } catch {
-                if (!cancelled) setSettings(null);
-            } finally {
-                if (!cancelled) setLoadingSettings(false);
-            }
-        })();
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
-    /* 3) 혜택 로드 */
-    useEffect(() => {
-        if (!activeCard?.cardId) {
+        const benefitsId = activeCard?.assetId ?? activeCard?.cardId; // assetId 우선
+        if (!benefitsId) {
             setBenefits(null);
             setActiveOther("전체");
             return;
         }
+
         let cancelled = false;
         setLoadingBenefits(true);
         setBenefitsError(null);
 
-        getCardBenefits(activeCard.cardId)
+        getCardBenefits(benefitsId)
             .then((res) => {
                 if (cancelled) return;
                 setBenefits(res);
-
-                const merged = mergeGroups([...(res.personalized ?? []), ...(res.others ?? [])]);
-                const available = new Set(merged.map((g) => normCat(g.category)));
-
-                let next: MasterCat | undefined;
-                for (const c of settings?.preferredCategories ?? []) {
-                    const key = normCat(c);
-                    if (available.has(key)) {
-                        const mapped = MASTER_NORM_MAP.get(key);
-                        if (mapped) {
-                            next = mapped;
-                            break;
-                        }
-                    }
-                }
-                setActiveOther(next ?? "전체");
+                const merged = [
+                    ...(Array.isArray(res.personalized) ? res.personalized : []),
+                    ...(Array.isArray(res.others) ? res.others : []),
+                ];
+                const allCats = new Set(
+                    merged.map((g) => (g.category ?? "").normalize("NFKC").replace(/[^\p{L}\p{N}]+/gu, "").toLowerCase()),
+                );
+                setActiveOther(allCats.size > 0 ? "전체" : "전체");
             })
             .catch((e: unknown) => {
                 if (cancelled) return;
                 const msg = e instanceof Error ? e.message : "혜택을 불러오지 못했습니다.";
                 setBenefitsError(msg);
+                setBenefits({ personalized: [], others: [] });
+                setActiveOther("전체");
             })
             .finally(() => {
                 if (!cancelled) setLoadingBenefits(false);
@@ -270,9 +232,9 @@ export default function CardSection() {
         return () => {
             cancelled = true;
         };
-    }, [activeCard?.cardId, settings?.preferredCategories]);
+    }, [activeCard?.assetId, activeCard?.cardId]);
 
-    /* 4) 가로 스크롤 활성 카드 추적 */
+    /* 3) 가로 스크롤 활성 카드 추적 */
     const rafRef = useRef<number | null>(null);
     const onScroll = useCallback(() => {
         if (!listRef.current) return;
@@ -348,30 +310,25 @@ export default function CardSection() {
     }, [activeOther, mergedAll, groupsByCat]);
 
     /* =============== 총 실적/구간(모달) =============== */
-    const thisMonthSpend = Math.max(0, Number(activeCard?.thisMonthSpend ?? 420_000)); // 예시 기본값
-    const prevMonthSpend = Math.max(
-        0,
-        Number((activeCard as CardSummaryExt)?.prevMonthSpend ?? 380_000),
-    );
+    const thisMonthSpend = Math.max(0, Number(activeCard?.thisMonthSpend ?? 420_000));
+    const prevMonthSpend = Math.max(0, Number((activeCard as CardSummaryExt)?.prevMonthSpend ?? 380_000));
 
     const tiersFromApi = (benefits as BenefitsExt | null)?.spendTiers;
-    const TIERS: Tier[] =
-        isTierArray(tiersFromApi) && tiersFromApi.length > 0 ? tiersFromApi : DEFAULT_TIERS;
+    const TIERS: Tier[] = isTierArray(tiersFromApi) && tiersFromApi.length > 0 ? tiersFromApi : DEFAULT_TIERS;
     const tierIdx = findTier(prevMonthSpend, TIERS);
     const currTier = TIERS[tierIdx];
     const nextTier = TIERS[tierIdx + 1];
     const needToNext = nextTier?.min != null ? Math.max(0, nextTier.min - prevMonthSpend) : 0;
 
     const meterMax = currTier?.max ?? 1_000_000;
-    const meterPct = Math.min(100, (thisMonthSpend / meterMax) * 100);
+    const meterPct = Math.min(100, meterMax > 0 ? (thisMonthSpend / meterMax) * 100 : 0);
 
     const barRatio = (() => {
         if (!currTier) return 0;
         if (currTier.max == null) return 1;
         const span = currTier.max - currTier.min;
-        const pos =
-            Math.min(currTier.max, Math.max(currTier.min, prevMonthSpend)) - currTier.min;
-        return Math.max(0, Math.min(1, pos / span));
+        const pos = Math.min(currTier.max, Math.max(currTier.min, prevMonthSpend)) - currTier.min;
+        return Math.max(0, Math.min(1, span > 0 ? pos / span : 0));
     })();
 
     // === 전체 월 예산(목표 대비 사용률 & 잔여 금액) ===
@@ -392,9 +349,7 @@ export default function CardSection() {
             <SectionBox width={352} padding="0px 16px 23px" outlined shadow={false}>
                 <div className={styles.sectionTitleCompact}>
                     <br />
-                    {activeCard && (
-                        <span className={styles.activeCardName}>&nbsp;{activeCard.name}</span>
-                    )}
+                    {activeCard && <span className={styles.activeCardName}>&nbsp;{activeCard.name}</span>}
                 </div>
 
                 {loadingCards && <div className={styles.loading}>불러오는 중…</div>}
@@ -431,13 +386,19 @@ export default function CardSection() {
 
             {/* 베리픽 버튼 */}
             <div className={styles.actionBtnWrap}>
-                <Button className={styles.sectionLikeBtn} onClick={() => {}}>
+                <Button
+                    className={styles.sectionLikeBtn}
+                    onClick={() => setShowBerryPick(true)}
+                >
           <span className={styles.btnInner}>
             <img src={berrylogo} alt="베리로고" className={styles.berryselectLogo} />
             <span className={styles.btnText}>베리픽 결제 추천 받기</span>
           </span>
                 </Button>
             </div>
+
+            {/* BerryPickPage를 바로 렌더 */}
+            {showBerryPick && <BerryPickPage />}
 
             {/* 이번 달 현황 */}
             <SectionBox width={352} padding="16px" outlined shadow={false}>
@@ -463,29 +424,20 @@ export default function CardSection() {
                             </div>
                         </div>
 
-                        {/* 잔여 예산(전체 월 예산 기준) */}
-                        <div className={styles.budgetCard}>
+                        {/* 잔여 예산 (피그마 프로그레스바) */}
+                        <div className={styles.budgetCard} role="group" aria-label="잔여 예산">
                             <div className={styles.budgetLabel}>잔여 예산</div>
 
-                            <div className={`${styles.budgetValue} ${budget?.exceeded ? styles.danger : ""}`}>
-                                {remainingText}
-                            </div>
+                            <div className={styles.budgetValue}>{remainingText}</div>
 
-                            <div className={styles.budgetMeter} aria-label="예산 사용률 게이지">
+                            {/* Track */}
+                            <div className={styles.budgetBarTrackFx} aria-hidden="true">
+                                {/* Fill */}
                                 <div
-                                    className={`${styles.budgetMeterFill} ${
-                                        budget?.exceeded ? styles.progressOver : ""
-                                    }`}
-                                    style={{ width: `${usedPct}%` }}
+                                    className={`${styles.budgetBarFillFx} ${budget?.exceeded ? styles.budgetBarFillOverFx : ""}`}
+                                    style={{ width: `${Math.max(0, Math.min(100, usedPct))}%` }}
                                 />
                             </div>
-
-                            {budget && (
-                                <div className={styles.budgetSub}>
-                                    목표 {budget.amountTarget.toLocaleString()}원 · 사용{" "}
-                                    {budget.amountSpent.toLocaleString()}원
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -496,13 +448,8 @@ export default function CardSection() {
                 <div className={styles.benefitsBox}>
                     <div className={styles.sectionTitle}>맞춤형 혜택</div>
 
-                    {loadingSettings && (
-                        <div className={styles.loading}>개인화 설정 불러오는 중…</div>
-                    )}
                     {loadingBenefits && <div className={styles.loading}>혜택 불러오는 중…</div>}
-                    {benefitsError && !loadingBenefits && (
-                        <div className={styles.error}>{benefitsError}</div>
-                    )}
+                    {benefitsError && !loadingBenefits && <div className={styles.error}>{benefitsError}</div>}
 
                     {!loadingBenefits && !benefitsError && (
                         <>
@@ -512,9 +459,7 @@ export default function CardSection() {
                                 if (p.length === 0) {
                                     return (
                                         <div className={styles.empty}>
-                                            {(settings?.preferredCategories?.length ?? 0) === 0
-                                                ? "회원가입 시 선호 카테고리를 아직 선택하지 않았어요. (0~3개 선택 가능)"
-                                                : "선호 카테고리에 해당하는 카드 혜택이 아직 없어요. 다른 카테고리도 확인해 보세요."}
+                                            선호 카테고리 기반 개인화는 일시적으로 비활성화되어 있어요. (기본 혜택을 확인해 보세요)
                                         </div>
                                     );
                                 }
@@ -534,7 +479,7 @@ export default function CardSection() {
                                                 className={[styles.chip, selected ? styles.chipSelected : ""].join(" ")}
                                                 onClick={() => setActiveOther(cat)}
                                                 aria-pressed={selected}
-                                                title={catEmoji[cat] + " " + cat}
+                                                title={cat}
                                             >
                                                 {cat}
                                             </button>
