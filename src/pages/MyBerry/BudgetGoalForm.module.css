@@ -1,0 +1,116 @@
+/* src/pages/MyBerry/BudgetGoalForm.module.css */
+.card {
+    width: 20rem;                /* w-80 */
+    background: var(--color-white);         /* bg-color-white-solid */
+    overflow: hidden;
+    padding: 0.5rem 0.75rem 0.75rem 0.75rem;
+}
+
+.compact {
+    /* 모달에서 살짝 조밀하게 */
+    transform: translateZ(0);
+}
+
+.header {
+    padding-top: 0.25rem;  /* pt-1 */
+    padding-bottom: 0.125rem; /* pb-0.5 */
+    margin-left: 0.75rem;  /* left 17px 근사 */
+    margin-top: 0.75rem;
+    color: var(--theme-primary);        /* text-color-violet-25 근사 */
+    font-size: 0.95rem;    /* text-sm 근사 */
+    font-weight: 700;      /* font-semibold */
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.body {
+    padding: 0.5rem 0.75rem;
+}
+
+.centerBlock {
+    display: grid;
+    justify-items: center;
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+}
+
+.labelStrong {
+    color: var(--theme-primary);        /* text-color-violet-25 근사 */
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.helperText {
+    color: var(--theme-text-light);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.amountRow {
+    position: relative;
+    margin-top: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.amountInput {
+    flex: 1;
+    border: none;
+    border-bottom: 2px solid rgba(114, 84, 240, 0.35);
+    outline: none;
+    font-size: 1.15rem;
+    font-weight: 700;
+    padding: 0.25rem 0.25rem 0.5rem 0.25rem;
+    text-align: left;
+}
+
+.won {
+    color: var(--theme-primary);
+    font-weight: 700;
+    margin-left: 0.25rem;
+}
+
+.divider {
+    height: 1px;
+    color: var(--theme-primary);
+    margin-top: 0.75rem;
+}
+
+.lastMonthHint {
+    margin-top: 0.75rem;
+    text-align: center;
+    color: var(--theme-light-gray);
+    font-size: 0.8rem;
+}
+
+.error {
+    margin-top: 0.5rem;
+    color: #b00020;
+    background: #fdecec;
+    border: 1px solid #f7c6c6;
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.footer {
+    padding: 0.5rem 0.75rem 0.75rem 0.75rem;
+}
+
+.submitBtn {
+    width: 100%;
+    height: 2.75rem; /* h-11 */
+    background:var(--theme-primary);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    border: 1px solid var(--theme-primary);
+    border-radius: 0.75rem;
+    cursor: pointer;
+}
+
+.submitBtn:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
