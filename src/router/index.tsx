@@ -14,6 +14,7 @@ import RegisterPage from '@/pages/Auth/RegisterPage';
 import AuthCallback from "@/pages/Auth/AuthCallback.tsx";
 import ReportPage from "@/pages/Report/ReportPage.tsx";
 import NotificationPage from "@/pages/Home/NotificationPage.tsx";
+import MySettingPage from "@/pages/MyBerry/MySettingPage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
             { path: '*', element: <NotFoundPage /> },
             { path: 'report', element: <ReportPage />},
             { path: 'notification', element: <NotificationPage />},
+            { path : 'myberry/settings', element : <MySettingPage/>}
         ],
     },
 ]);
