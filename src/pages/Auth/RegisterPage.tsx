@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Auth.module.css";
 
-import Header4Auth from '@/components/layout/Header4Auth';
 import {updateUserSettings} from "@/api/userApi.ts";
+import styled from "styled-components";
 
 type RegisterRequest = {
     categories: string[];
@@ -142,11 +142,51 @@ export default function RegisterPage(){
         }
     };
 
+    // Header4Auth 고정 스타일
+    const AuthHeaderWrapper = styled.header`
+      position: sticky;     
+      top: 0;
+      z-index: 10;
+    
+      width: 100%;
+      max-width: 24rem;
+      background-color: var(--theme-primary);
+    
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    
+      height: 141px;
+      gap: 8px;
+    `;
 
+    const Brand = styled.h1`
+      font-size: 32px;
+      font-weight: 600;
+      font-family: Inter, sans-serif;
+      color: var(--slogan-gray);
+      margin: 0;
+      width: 100%;
+      text-align: center;
+    `;
+
+    const Slogan = styled.p`
+      font-size: 14.4px;
+      font-weight: 500;
+      font-family: Roboto, sans-serif;
+      color: var(--slogan-gray);
+      margin: 0;
+      width: 100%;
+      text-align: center;
+    `;
 
     return (
         <div>
-            <Header4Auth />
+            <AuthHeaderWrapper>
+                <Brand>berryselect</Brand>
+                <Slogan>내 지갑 속 딱 맞는 결제 순간</Slogan>
+            </AuthHeaderWrapper>
 
             {/* 카테고리(최대 3) */}
             <section className={styles.categorySection}>
