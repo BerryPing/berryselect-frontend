@@ -24,7 +24,7 @@ const FORCED_BRAND = "스타벅스";
 const FORCED_PRODUCT = "아이스 아메리카노 T 2잔";
 
 /** products(id) 더미 고정 */
-const DEFAULT_PRODUCT_ID = 13;
+const DEFAULT_PRODUCT_ID = 9;
 
 /** "브랜드 상품명" -> 브랜드/상품 분리(fallback용) */
 function splitName(fullName?: string | null) {
