@@ -1,9 +1,9 @@
 /* ===== DefaultLayout.tsx ===== */
 
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useMatches } from 'react-router-dom';
 import styled from 'styled-components';
-import FooterNav from "@/components/layout/FooterNav.tsx";
+import FooterNav from '@/components/layout/FooterNav.tsx';
 
 const ViewWrapper = styled.div`
   display: flex;
@@ -30,45 +30,58 @@ const SmartphoneView = styled.div`
 
 // 콘텐츠가 헤더/푸터에 가리지 않도록 안전 여백
 const Main = styled.main`
-  flex:1 1 auto;
-  padding-top:56px;   /* Header 높이 */
-  padding-bottom:69px;/* Footer 높이 */
-    
-    /* 스크롤은 유지하되(항상 공간 확보) 스크롤바는 숨기기 */
-    overflow-y: scroll;          /* <- 항상 스크롤 영역 확보 */
-    -ms-overflow-style: none;    /* IE/Edge(레거시) */
-    scrollbar-width: none;       /* Firefox */
-    &::-webkit-scrollbar {       /* Chrome/Safari */
-        width: 0;
-        height: 0;
-        display: none;
-    }
+  flex: 1 1 auto;
+  padding-top: 56px; /* Header 높이 */
+  padding-bottom: 69px; /* Footer 높이 */
 
-    /* 탭 전환 시 가로폭 흔들림 방지(지원 브라우저에서 추가 안정화) */
-    scrollbar-gutter: stable both-edges;
+  /* 스크롤은 유지하되(항상 공간 확보) 스크롤바는 숨기기 */
+  overflow-y: scroll; /* <- 항상 스크롤 영역 확보 */
+  -ms-overflow-style: none; /* IE/Edge(레거시) */
+  scrollbar-width: none; /* Firefox */
+  &::-webkit-scrollbar {
+    /* Chrome/Safari */
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  /* 탭 전환 시 가로폭 흔들림 방지(지원 브라우저에서 추가 안정화) */
+  scrollbar-gutter: stable both-edges;
 `;
 
-const DefaultLayout: React.FC = () => {
-    const location = useLocation();
-    const isAuthPage = location.pathname.startsWith("/auth");
-    const isMyBerryPage = location.pathname.startsWith("/myberry");
-    return (
-        <ViewWrapper>
-            <SmartphoneView>
-                <Main style={{
-                    paddingTop: (isAuthPage||isMyBerryPage) ? 0 : "56px",
-                    paddingBottom: (isAuthPage||isMyBerryPage) ? 0 : "69px",
-                }}>
-                    <Outlet />
-                </Main>
+type RouteHandle = {
+  noHeader?: boolean;
+};
 
-                {/* 고정 하단 네비게이션 */}
-                {/* auth 페이지에는 FooterNav 숨기기 */}
-                {!isAuthPage && <FooterNav />}
-            </SmartphoneView>
-        </ViewWrapper>
-    );
+const DefaultLayout: React.FC = () => {
+  const location = useLocation();
+  const isAuthPage = location.pathname.startsWith('/auth');
+
+  const matches = useMatches();
+  const handle = matches.find(
+    (m) => (m.handle as RouteHandle)?.noHeader !== undefined
+  )?.handle as RouteHandle | undefined;
+  const noHeader = handle?.noHeader ?? false;
+  const isMyBerryPage = location.pathname.startsWith('/myberry');
+
+  return (
+    <ViewWrapper>
+      <SmartphoneView>
+        <Main
+          style={{
+            paddingTop: noHeader || isAuthPage || isMyBerryPage ? 0 : '56px',
+            paddingBottom: isAuthPage || isMyBerryPage ? 0 : '69px',
+          }}
+        >
+          <Outlet />
+        </Main>
+
+        {/* 고정 하단 네비게이션 */}
+        {/* auth 페이지에는 FooterNav 숨기기 */}
+        {!isAuthPage && <FooterNav />}
+      </SmartphoneView>
+    </ViewWrapper>
+  );
 };
 
 export default DefaultLayout;
-
