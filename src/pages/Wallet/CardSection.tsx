@@ -1,5 +1,6 @@
 // src/pages/Wallet/CardSection.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SectionBox from "@/components/common/SectionBox";
 import CardItem from "@/components/wallet/CardItem";
 import berrylogo from "@/assets/imgs/berrylogo.png";
@@ -18,7 +19,6 @@ import { openDeepLink } from "@/utils/deepLink";
 import Modal from "@/components/common/Modal";
 import { Info } from "lucide-react";
 import { fetchBudget, type Budget } from "@/api/myberryApi";
-import BerryPickPage from "@/pages/BerryPick/BerryPickPage.tsx";
 
 /* -------------------- 공통 UI 셀 -------------------- */
 function BenefitItemRow({ item }: { item: BenefitItem }) {
@@ -128,6 +128,8 @@ function formatMoney(n: number) {
 
 /* =============== Component =============== */
 export default function CardSection() {
+    const navigate = useNavigate();
+
     const [cards, setCards] = useState<CardSummary[]>([]);
     const [loadingCards, setLoadingCards] = useState(false);
     const [cardsError, setCardsError] = useState<string | null>(null);
@@ -142,9 +144,6 @@ export default function CardSection() {
     const [activeOther, setActiveOther] = useState<MasterCat>("전체");
 
     const [openPerfModal, setOpenPerfModal] = useState(false);
-
-    // ✅ BerryPickPage 표시용 상태
-    const [showBerryPick, setShowBerryPick] = useState(false);
 
     const fetchedBudgetRef = useRef(false);
 
@@ -209,6 +208,7 @@ export default function CardSection() {
             .then((res) => {
                 if (cancelled) return;
                 setBenefits(res);
+
                 const merged = [
                     ...(Array.isArray(res.personalized) ? res.personalized : []),
                     ...(Array.isArray(res.others) ? res.others : []),
@@ -388,7 +388,7 @@ export default function CardSection() {
             <div className={styles.actionBtnWrap}>
                 <Button
                     className={styles.sectionLikeBtn}
-                    onClick={() => setShowBerryPick(true)}
+                    onClick={() => navigate("/berrypick")}  // ← 여기서 페이지로 이동
                 >
           <span className={styles.btnInner}>
             <img src={berrylogo} alt="베리로고" className={styles.berryselectLogo} />
@@ -396,9 +396,6 @@ export default function CardSection() {
           </span>
                 </Button>
             </div>
-
-            {/* BerryPickPage를 바로 렌더 */}
-            {showBerryPick && <BerryPickPage />}
 
             {/* 이번 달 현황 */}
             <SectionBox width={352} padding="16px" outlined shadow={false}>

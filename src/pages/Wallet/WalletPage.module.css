@@ -265,7 +265,7 @@
 .budgetBarFillFx {
     height: 100%;
     width: 0;                   /* JS로 width% 지정 */
-    background: #FD9F28;        /* spring-green-30 */
+    background: #059669;        /* spring-green-30 */
     border-radius: 3px;
     transition: width 220ms ease;
 }
