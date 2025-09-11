@@ -3,7 +3,7 @@ import styled from 'styled-components';
 const Wrapper = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 18px;
 `;
 
 const Card = styled.div`
@@ -38,10 +38,22 @@ const Label = styled.div`
   color: #3c1053;
 `;
 
-const Value = styled.div<{ highlight?: boolean }>`
+// const Value = styled.div<{ highlight?: boolean }>`
+//   font-size: ${(p) => (p.highlight ? '17px' : '14px')};
+//   font-weight: ${(p) => (p.highlight ? 700 : 600)};
+//   color: ${(p) => (p.highlight ? '#5f0080' : '#059669')};
+// `;
+
+const Value = styled.div<{ highlight?: boolean; strike?: boolean }>`
   font-size: ${(p) => (p.highlight ? '17px' : '14px')};
   font-weight: ${(p) => (p.highlight ? 700 : 600)};
-  color: ${(p) => (p.highlight ? '#5f0080' : '#059669')};
+  color: ${(p) =>
+    p.highlight
+      ? 'var(--theme-primary, #5f0080)'
+      : p.strike
+      ? 'var(--theme-primary, #5f0080)'
+      : '#059669'};
+  text-decoration: ${(p) => (p.strike ? 'line-through' : 'none')};
 `;
 
 const Footer = styled.div`
@@ -78,7 +90,7 @@ export const CheckoutDetailCard = ({
       <Header>💰 결제 상세</Header>
       <Row>
         <Label>원가</Label>
-        <Value>{original.toLocaleString()}원</Value>
+        <Value strike>{original.toLocaleString()}원</Value>
       </Row>
       {details.map((d, idx) => (
         <Row key={idx}>

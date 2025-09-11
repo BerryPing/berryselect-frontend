@@ -5,6 +5,9 @@ import { CheckoutMerchantCard } from '@/components/berrypay/CheckoutMerchantCard
 import { CheckoutCombinationCard } from '@/components/berrypay/CheckoutCombinationCard';
 import { CheckoutDetailCard } from '@/components/berrypay/CheckoutDetailCard';
 import Button from '@/components/common/Button';
+import Modal from '@/components/common/Modal';
+import AssetTabs from '@/components/wallet/AssetTabs';
+import type { AssetTab } from '@/components/wallet/AssetTabs';
 import type { Option, SessionResponse } from '@/types/reco';
 import Header from '@/components/layout/Header';
 
@@ -22,6 +25,7 @@ const CheckoutPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [session, setSession] = useState<SessionResponse | null>(null);
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
+  const [tab, setTab] = useState<AssetTab>('card');
 
   // 세션 상세 불러오기
   useEffect(() => {
@@ -46,43 +50,53 @@ const CheckoutPage = () => {
     return <div>잘못된 접근입니다.</div>;
   }
 
-  const handlePayment = async (method: string) => {
+  /** ✅ 결제 실행 (chooseOption → createTransaction) */
+  const handlePayment = async () => {
     try {
+      // 1. 옵션 확정
+      await recoApi.chooseOption(sessionId, optionId);
+
+      // 2. 트랜잭션 생성
       const res = await recoApi.createTransaction(
         merchantId,
         paidAmount,
         sessionId,
         optionId
       );
-      alert(`${method} 결제 성공: ${JSON.stringify(res.data, null, 2)}`);
-      setShowModal(false);
+
+      console.log(`결제 성공 🎉: ${JSON.stringify(res.data, null, 2)}`);
     } catch (error) {
       console.error('결제 실패:', error);
+      alert('결제 처리 중 오류가 발생했습니다.');
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <Header showBackButton={false} title={'베리픽'}></Header>
-      {/* 가맹점 & 결제 금액 */}
+      <Header showBackButton={false} title={'베리픽'} />
+
       <CheckoutMerchantCard
         name={merchantName ?? '알 수 없는 가맹점'}
         address={merchantAddress ?? ''}
         amount={paidAmount}
       />
 
-      {/* 추천 조합 */}
       {selectedOption && (
         <CheckoutCombinationCard
-          items={selectedOption.items.map((item) => ({
-            title: item.title,
-            subtitle: item.subtitle,
-            value: item.appliedValue,
-          }))}
+          items={selectedOption.items.map((item) => {
+            let subtitle = item.subtitle;
+            if (item.title.includes('노리2 체크카드')) subtitle = 'KB국민카드';
+            else if (item.title.includes('KT 멤버십')) subtitle = 'VIP 등급';
+            else if (item.title.includes('GS 멤버십'))
+              subtitle = 'Welcome 등급';
+            else if (item.title.includes('NH 올원 체크카드'))
+              subtitle = 'NH농협카드';
+
+            return { title: item.title, subtitle, value: item.appliedValue };
+          })}
         />
       )}
 
-      {/* 결제 상세 */}
       {selectedOption && (
         <CheckoutDetailCard
           original={session?.inputAmount ?? paidAmount}
@@ -107,53 +121,34 @@ const CheckoutPage = () => {
         />
       )}
 
-      {/* 결제하기 버튼 */}
-      <div
-        style={{ marginTop: '20px', justifyContent: 'center' }}
-        //  , display: 'flex',
-      >
-        <Button onClick={() => setShowModal(true)}>
-          {/* fullWidth variant="purple" */}
-          결제하기
-        </Button>
+      <div style={{ marginTop: '18px', marginBottom: '10px' }}>
+        <Button onClick={() => setShowModal(true)}>결제하기</Button>
       </div>
 
-      {/* 결제 모달 */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-80">
-            <h2 className="text-lg font-bold mb-4">결제 수단 선택</h2>
-            <div className="space-y-2">
-              <button
-                className="w-full py-2 bg-purple-600 text-white rounded"
-                onClick={() => handlePayment('기프티콘')}
-              >
-                기프티콘 결제
-              </button>
-              <button
-                className="w-full py-2 bg-purple-600 text-white rounded"
-                onClick={() => handlePayment('멤버십')}
-              >
-                멤버십 결제
-              </button>
-              <button
-                className="w-full py-2 bg-purple-600 text-white rounded"
-                onClick={() => handlePayment('카드')}
-              >
-                카드 결제
-              </button>
-            </div>
-            <button
-              className="mt-4 w-full py-2 border rounded"
-              onClick={() => setShowModal(false)}
-            >
-              취소
-            </button>
-          </div>
+      {/* ✅ 모달 */}
+      <Modal open={showModal} onClose={() => setShowModal(false)}>
+        <AssetTabs value={tab} onChange={setTab} />
+        <div style={{ marginTop: '16px' }}>
+          <Button fullWidth variant="purple" onClick={handlePayment}>
+            {labelForTab(tab)} 결제 진행
+          </Button>
         </div>
-      )}
+      </Modal>
     </div>
   );
+};
+
+const labelForTab = (tab: AssetTab) => {
+  switch (tab) {
+    case 'card':
+      return '카드';
+    case 'membership':
+      return '멤버십';
+    case 'gifticon':
+      return '기프티콘';
+    default:
+      return '결제';
+  }
 };
 
 export default CheckoutPage;

@@ -4,7 +4,7 @@ import styled from 'styled-components';
 const Wrapper = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 18px;
 `;
 
 const Card = styled.div`
