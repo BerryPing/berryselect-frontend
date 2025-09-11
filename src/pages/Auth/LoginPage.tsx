@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import berrylogo from "@/assets/imgs/berrylogo.png";
 import Header4Auth from "@/components/layout/Header4Auth.tsx";
+import Button from "@/components/common/Button.tsx";
 
 
 
@@ -37,9 +38,9 @@ export default function LoginPage() {
             <Logo src={berrylogo} alt="berry logo" />
 
             {/* 회원가입(카카오로 시작하기) */}
-            <StartButton onClick={startKakaoAuth} disabled={loading}>
+            <StartBtn onClick={startKakaoAuth} disabled={loading} >
                 베리셀렉트 시작하기
-            </StartButton>
+            </StartBtn>
 
             <Inline>
                 <InlineText>이미 계정이 있으신가요?</InlineText>
@@ -69,15 +70,6 @@ const Logo = styled.img`
   margin-bottom: -40px;
 `;
 
-const StartButton = styled.button`
-  background: var(--theme-primary);
-  color: var(--color-white);
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 9px 50px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-`;
-
 const Inline = styled.div`
     display : flex;
     align-items : center;
@@ -100,3 +92,8 @@ background-color : transparent;
     font-size : 14px;
     cursor : pointer;
 `
+
+const StartBtn = styled(Button)`
+  align-self: flex-start;   
+  margin-left: -16px;
+`;

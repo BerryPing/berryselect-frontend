@@ -1,6 +1,6 @@
 /* Auth.module.css */
 
-/* 섹션 */
+s
 .categorySection {
     margin-bottom: 20px;
 }
@@ -251,9 +251,15 @@
     cursor: pointer;
     transition: opacity .15s ease, transform .02s ease;
 }
-.primaryAction:active { transform: translateY(1px); }
-.primaryActionDisabled {
-    background: #d9cbe5;
-    color: #6b6b6b;
+.primaryAction {
+    background-color: var(--theme-primary) !important;
+    color: #fff !important;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.primaryAction:disabled {
+    background-color: var(--slogan-gray) !important;
+    color: #888 !important;
     cursor: not-allowed;
 }
