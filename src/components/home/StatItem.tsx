@@ -22,11 +22,7 @@ interface StatItemProps {
 }
 
 const StatItem: React.FC<StatItemProps> = ({
-                                               stats = [
-                                                   { value: '+12,400원', label: '이번 달\n절감금액', color: 'var(--theme-text-green, #059669)' },
-                                                   { value: '76%', label: '추천\n사용률', color: 'var(--theme-primary, #5F0080)' },
-                                                   { value: '58,000원', label: '이번 달\n잔여예산', color: 'var(--theme-text, #3C1053)' }
-                                               ],
+                                               stats = [],
                                                showGoalButton = true,
                                                onGoalClick,
                                                onCardClick
@@ -38,7 +34,6 @@ const StatItem: React.FC<StatItemProps> = ({
                 height: 131,
                 position: 'relative',
                 background: 'var(--color-white, white)',
-                boxShadow: '0px 8px 20px -12px rgba(0, 0, 0, 0.15)',
                 overflow: 'hidden',
                 borderRadius: 16,
                 outline: '1px var(--theme-secondary, #E5D5F0) solid',

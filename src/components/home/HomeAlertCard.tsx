@@ -33,7 +33,6 @@ const HomeAlertCard: React.FC<HomeAlertCardProps> = ({
                 width: 352,
                 padding: 17,
                 background: 'var(--color-white, white)',
-                boxShadow: '0px 4px 12px -4px rgba(0, 0, 0, 0.10)',
                 overflow: 'hidden',
                 borderRadius: 12,
                 outline: '1px var(--theme-secondary, #E5D5F0) solid',
