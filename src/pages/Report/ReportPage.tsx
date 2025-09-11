@@ -229,7 +229,7 @@ const ReportPage = () => {
                     fontSize: 15.2,
                     fontFamily: 'inherit',
                     fontWeight: '800',
-                    wordWrap: 'break-word'
+                    wordWrap: 'break-word',
                 }}>
                     AI 요약
                 </div>
@@ -238,7 +238,8 @@ const ReportPage = () => {
             <div style={{
                 padding: "0px 20px 30px 20px",
                 display: "flex",
-                justifyContent: "center"
+                justifyContent: "center",
+                marginTop: '-20px'
             }}>
                 <AiSummaryCard
                     summary={aiSummary}

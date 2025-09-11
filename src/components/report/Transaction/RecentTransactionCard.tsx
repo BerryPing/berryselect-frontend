@@ -13,6 +13,7 @@ interface Transaction {
 interface RecentTransactionCardProps {
     transactions?: Transaction[];
     title?: string;
+    width?: number;
 }
 
 const RecentTransactionCard: React.FC<RecentTransactionCardProps> = ({
@@ -34,11 +35,12 @@ const RecentTransactionCard: React.FC<RecentTransactionCardProps> = ({
                                                                                  reward: 400
                                                                              }
                                                                          ],
-                                                                         title = '최근 거래'
+                                                                         title = '최근 거래',
+                                                                         width= 334
                                                                      }) => {
     return (
         <div style={{
-            width: 334,
+            width: width || 334,
             display: 'flex',
             flexDirection: 'column',
             gap: 16,
@@ -51,7 +53,9 @@ const RecentTransactionCard: React.FC<RecentTransactionCardProps> = ({
                     fontSize: 15.2,
                     fontFamily: 'inherit',
                     fontWeight: '800',
-                    wordWrap: 'break-word'
+                    wordWrap: 'break-word',
+                    alignSelf: 'flex-start',
+                    marginLeft: '7px'
                 }}>
                     {title}
                 </div>

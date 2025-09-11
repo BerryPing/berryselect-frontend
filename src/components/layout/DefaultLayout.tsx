@@ -55,20 +55,22 @@ type RouteHandle = {
 
 const DefaultLayout: React.FC = () => {
   const location = useLocation();
+  const isAuthPage = location.pathname.startsWith('/auth');
+
   const matches = useMatches();
   const handle = matches.find(
     (m) => (m.handle as RouteHandle)?.noHeader !== undefined
   )?.handle as RouteHandle | undefined;
   const noHeader = handle?.noHeader ?? false;
-  const isAuthPage = location.pathname.startsWith('/auth');
+  const isMyBerryPage = location.pathname.startsWith('/myberry');
 
   return (
     <ViewWrapper>
       <SmartphoneView>
         <Main
           style={{
-            paddingTop: noHeader || isAuthPage ? 0 : '56px',
-            paddingBottom: isAuthPage ? 0 : '69px',
+            paddingTop: noHeader || isAuthPage || isMyBerryPage ? 0 : '56px',
+            paddingBottom: isAuthPage || isMyBerryPage ? 0 : '69px',
           }}
         >
           <Outlet />

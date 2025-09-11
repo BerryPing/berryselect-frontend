@@ -13,6 +13,8 @@ import LoginPage from '@/pages/Auth/LoginPage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
 import AuthCallback from '@/pages/Auth/AuthCallback.tsx';
 import ReportPage from '@/pages/Report/ReportPage.tsx';
+import NotificationPage from '@/pages/Home/NotificationPage.tsx';
+import MySettingPage from '@/pages/MyBerry/MySettingPage.tsx';
 import MerchantSearchResultPage from '@/pages/merchantSearch/MerchantResultPage';
 import CheckoutPage from '@/pages/BerryPick/CheckoutPage.tsx';
 
@@ -39,6 +41,8 @@ export const router = createBrowserRouter([
         element: <MerchantSearchResultPage />,
         handle: { noHeader: true },
       },
+      { path: 'notification', element: <NotificationPage /> },
+      { path: 'myberry/settings', element: <MySettingPage /> },
     ],
   },
 ]);
