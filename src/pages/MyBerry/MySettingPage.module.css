@@ -1,0 +1,140 @@
+/* ===== 크기/이동 변수 ===== */
+:root {
+    --switch-w: 48px;
+    --switch-h: 24px;
+    --thumb: 20px;
+    --pad: 2px;
+    --travel: calc(var(--switch-w) - var(--thumb) - var(--pad) * 2);
+}
+
+/* /myberry* 는 레이아웃 패딩이 0 → 페이지가 여백 책임 */
+.page {
+    padding: 16px;
+    padding-top: 56px; /* 헤더 높이 */
+}
+
+/* 카드 */
+.card {
+    background: var(--color-white);
+    border-radius: 1rem;
+    outline: 1px solid var(--theme-secondary);
+    box-shadow: 0 8px 20px -12px rgba(0,0,0,.15);
+    overflow: hidden;
+
+    width: 100%;
+    max-width: 20rem;
+    margin: 18px auto;
+
+    /* 카드 내부 공통 좌우 여백 값을 변수로 통일 */
+    --x: 24px;
+    padding: 8px 0; /* 좌우는 행/디바이더가 담당 */
+}
+
+.title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--theme-text);
+    margin: 6px var(--x) 12px; /* ← 좌우 24px로 행과 정렬 일치 */
+}
+
+/* 리스트/행 */
+.list {
+    display: flex;
+    flex-direction: column;
+    padding-bottom : 25px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr var(--switch-w); /* 오른쪽 고정폭 → 정렬 고정 */
+    align-items: center;
+    column-gap: 15px;
+
+    /* 여기서 패딩을 주되 총 너비가 넘지 않도록 box-sizing */
+    padding: 5px var(--x);
+    box-sizing: border-box;       /* ← 핵심! */
+    /* width: 100%;  <- 필요 없음, 제거 */
+}
+
+.label {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--theme-primary);
+    white-space: nowrap;
+}
+
+
+.sectionTitle {
+    margin: 10px var(--x) 8px;    /* 좌우 여백 통일 */
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 var(--x) 12px;     /* 좌우 여백 통일 */
+}
+
+.actionBtn {
+    background: none;
+    border: 0;
+    padding: 3px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--theme-primary);
+    cursor: pointer;
+}
+.actionBtn:hover { color: #3b0f63; }
+
+/* ===== 버튼 기반 토글 ===== */
+.switch {
+    inline-size: var(--switch-w);
+    block-size: var(--switch-h);
+    border-radius: 9999px;
+    background: #ece8f1; /* OFF */
+    border: none;
+    position: relative;
+    padding: 0;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color .2s ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0; /* 정렬 안정화 */
+    border: none;
+    background-clip: padding-box;
+}
+.switch:focus { outline: none; }
+
+.switch[aria-checked="true"] {
+    background: var(--theme-primary); /* ON */
+}
+
+.switch:focus-visible {
+    box-shadow: 0 0 0 3px rgba(95,0,128,.18);
+}
+
+/* thumb */
+.thumb {
+    position: absolute;
+    top: var(--pad);
+    left: var(--pad);
+    inline-size: var(--thumb);
+    block-size: var(--thumb);
+    border-radius: 50%;
+    background: var(--color-white);
+    box-shadow: 0 2px 4px rgba(0,0,0,.2);
+    transform: translateX(0);
+    transition: transform .2s ease;
+}
+
+.switch[aria-checked="true"] .thumb {
+    transform: translateX(var(--travel));
+}
+
+.errorText {
+    color: #c53030;
+    font-size: 12px;
+    margin: 4px 24px 0;
+}
